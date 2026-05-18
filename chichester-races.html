@@ -72,6 +72,7 @@
     #map {
       flex: 1;
       cursor: default;
+      background: #d4e8f0;
     }
 
     #map.quiz-locate { cursor: crosshair; }
@@ -980,28 +981,6 @@ const MARKS = [
     notes: "Inflatable zone mark for bay courses. Exact position set on the day by the race officer.",
     club: "ISC / HISC"
   },
-  {
-    id: "nw_winner",
-    name: "NW Winner",
-    lat: 50.7550, lng: -0.9533,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "Marks the NW extremity of the Winner Bank. Frequently used as a windward or gybe mark in Hayling Bay courses.",
-    club: "HISC"
-  },
-  {
-    id: "winner",
-    name: "Winner",
-    lat: 50.7417, lng: -0.9350,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "On the Winner Bank southeast of the entrance. Used as a leeward or gybe mark. The bank dries at low water — stay clear of it.",
-    club: "HISC"
-  },
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -1016,19 +995,18 @@ let quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
 
 // ─── Map ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', {
-  center: [50.790, -0.915],
-  zoom: 12
+  center: [50.790, -0.926],
+  zoom: 12,
+  maxBounds: [[50.650, -1.100], [50.950, -0.750]],
+  maxBoundsViscosity: 0.8
 });
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
-  maxZoom: 19
-}).addTo(map);
-
-// OpenSeaMap nautical overlay
-L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-  opacity: 0.8,
-  attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a>'
+// ISC Course Card Alpha 2025-2028 as the map base
+// Bounds calibrated from the chart's geographic extent
+const chartBounds = [[50.708, -1.022], [50.875, -0.830]];
+L.imageOverlay('isc-chart.png', chartBounds, {
+  opacity: 1,
+  attribution: '© Itchenor Sailing Club — Course Card Alpha 2025–2028'
 }).addTo(map);
 
 // ─── Marker helpers ───────────────────────────────────────────────────────────
