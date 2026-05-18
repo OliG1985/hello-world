@@ -1104,11 +1104,16 @@ function buildMarkList() {
 // phase 'name'  — show code badge, pick the mark name from multiple choice
 // phase 'locate' — find the mark on the chart by clicking
 
-const ROUND_SIZE = 20;
+const ROUND_SIZE = 2;
 
 function startQuiz() {
   quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', marksAnswered: 0 };
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+  if (difficulty === 'hard') {
+    document.getElementById('diff-easy').disabled = true;
+    document.getElementById('diff-easy').style.opacity = '0.35';
+    document.getElementById('diff-easy').title = 'Cannot switch to Easy mid-round';
+  }
   nextQuestion();
 }
 
@@ -1150,12 +1155,19 @@ function showRoundEnd() {
   selectedMark = null;
   placeMarkers();
 
+  // Re-enable difficulty buttons
+  const easyBtn = document.getElementById('diff-easy');
+  easyBtn.disabled = false;
+  easyBtn.style.opacity = '';
+  easyBtn.title = '';
+
   const pct = quiz.total > 0 ? Math.round((quiz.score / quiz.total) * 100) : 0;
   const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
+  const modeLabel = difficulty === 'hard' ? '🔥 Hard mode — double points' : `${ROUND_SIZE} marks`;
 
   document.getElementById('tab-quiz').innerHTML = `
     <div class="round-end">
-      <div class="round-score-label">Round complete — ${ROUND_SIZE} marks</div>
+      <div class="round-score-label">Round complete — ${modeLabel}</div>
       <div class="round-score-big">${quiz.score} / ${quiz.total}</div>
       <div class="round-score-label">${pct}% correct</div>
       <div class="round-grade ${pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong'}">${grade}</div>
@@ -1190,10 +1202,11 @@ function runSymbolQuestion() {
 function handleSymbolAnswer(answer) {
   if (quiz.answered || quiz.phase !== 'name') return;
   quiz.answered = true;
-  quiz.total++;
+  const pts = difficulty === 'hard' ? 2 : 1;
+  quiz.total += pts;
 
   const correct = answer === quiz.current.name;
-  if (correct) quiz.score++;
+  if (correct) quiz.score += pts;
 
   document.querySelectorAll('.qbtn').forEach(btn => {
     btn.disabled = true;
@@ -1250,7 +1263,8 @@ function runLocateQuestion() {
 function handleLocateClick(e) {
   if (quiz.answered || quiz.phase !== 'locate') return;
   quiz.answered = true;
-  quiz.total++;
+  const pts = difficulty === 'hard' ? 2 : 1;
+  quiz.total += pts;
   map.getContainer().classList.remove('quiz-locate');
   map.off('click', handleLocateClick);
 
@@ -1261,7 +1275,7 @@ function handleLocateClick(e) {
   );
   const correct = dist < 120;
   const close   = dist < 350;
-  if (correct) quiz.score++;
+  if (correct) quiz.score += pts;
 
   if (locateCircle) map.removeLayer(locateCircle);
   locateCircle = L.circleMarker(target, {
@@ -1459,6 +1473,11 @@ function setMode(m) {
 
   document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
   selectedMark = null;
+
+  if (m !== 'quiz') {
+    const easyBtn = document.getElementById('diff-easy');
+    easyBtn.disabled = false; easyBtn.style.opacity = ''; easyBtn.title = '';
+  }
 
   if (m === 'calibrate') {
     enterCalibrateMode();
