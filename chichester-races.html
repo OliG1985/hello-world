@@ -557,13 +557,24 @@
       </div>
       <div class="panel-body" id="tab-list"  style="display:none"></div>
       <div class="panel-body" id="tab-quiz"  style="display:none">
-        <div class="quiz-panel">
-          <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
-          <div class="quiz-prompt"  id="quiz-question"></div>
-          <div class="quiz-target"  id="quiz-target"  style="display:none"></div>
-          <div class="quiz-options" id="quiz-options"></div>
-          <div class="quiz-feedback"id="quiz-feedback"></div>
-          <button class="next-btn"  id="quiz-next" onclick="nextQuestion()">Next →</button>
+        <div id="quiz-ui">
+          <div class="quiz-panel">
+            <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
+            <div class="quiz-prompt"  id="quiz-question"></div>
+            <div class="quiz-target"  id="quiz-target"  style="display:none"></div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback"id="quiz-feedback"></div>
+            <button class="next-btn"  id="quiz-next" onclick="nextQuestion()">Next →</button>
+          </div>
+        </div>
+        <div id="quiz-end" style="display:none">
+          <div class="round-end">
+            <div class="round-score-label" id="end-label"></div>
+            <div class="round-score-big"   id="end-score"></div>
+            <div class="round-score-label" id="end-pct"></div>
+            <div class="round-grade"       id="end-grade"></div>
+            <button class="round-play-again" onclick="startQuiz()">Play again</button>
+          </div>
         </div>
       </div>
 
@@ -1004,8 +1015,7 @@ function placeMarkers() {
         handleSymbolAnswer(mark.name);
       } else if (mode === 'quiz' && quiz.phase === 'locate' && !quiz.answered) {
         L.DomEvent.stopPropagation(e);
-        map.off('click', handleLocateClick);
-        handleLocateClick({ latlng: L.latLng(latlng[0], latlng[1]) });
+        handleLocateClick(mark.id === quiz.current.id);
       }
     });
     leafletMarkers[mark.id] = m;
@@ -1037,7 +1047,6 @@ function switchTab(name) {
     document.getElementById('tab-' + id).style.display = id === name ? 'block' : 'none';
   });
   if (name === 'list') buildMarkList();
-  if (name === 'quiz' && quiz.total === 0) startQuiz();
 }
 
 document.querySelectorAll('.panel-tab').forEach(tab =>
@@ -1114,6 +1123,8 @@ function startQuiz() {
     document.getElementById('diff-easy').style.opacity = '0.35';
     document.getElementById('diff-easy').title = 'Cannot switch to Easy mid-round';
   }
+  document.getElementById('quiz-ui').style.display  = 'block';
+  document.getElementById('quiz-end').style.display = 'none';
   nextQuestion();
 }
 
@@ -1155,25 +1166,22 @@ function showRoundEnd() {
   selectedMark = null;
   placeMarkers();
 
-  // Re-enable difficulty buttons
   const easyBtn = document.getElementById('diff-easy');
-  easyBtn.disabled = false;
-  easyBtn.style.opacity = '';
-  easyBtn.title = '';
+  easyBtn.disabled = false; easyBtn.style.opacity = ''; easyBtn.title = '';
 
   const pct = quiz.total > 0 ? Math.round((quiz.score / quiz.total) * 100) : 0;
   const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
   const modeLabel = difficulty === 'hard' ? '🔥 Hard mode — double points' : `${ROUND_SIZE} marks`;
+  const gradeClass = pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong';
 
-  document.getElementById('tab-quiz').innerHTML = `
-    <div class="round-end">
-      <div class="round-score-label">Round complete — ${modeLabel}</div>
-      <div class="round-score-big">${quiz.score} / ${quiz.total}</div>
-      <div class="round-score-label">${pct}% correct</div>
-      <div class="round-grade ${pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong'}">${grade}</div>
-      <button class="round-play-again" onclick="startQuiz()">Play again</button>
-    </div>
-  `;
+  document.getElementById('end-label').textContent = `Round complete — ${modeLabel}`;
+  document.getElementById('end-score').textContent = `${quiz.score} / ${quiz.total}`;
+  document.getElementById('end-pct').textContent   = `${pct}% correct`;
+  document.getElementById('end-grade').textContent = grade;
+  document.getElementById('end-grade').className   = `round-grade ${gradeClass}`;
+
+  document.getElementById('quiz-ui').style.display  = 'none';
+  document.getElementById('quiz-end').style.display = 'block';
 }
 
 function runSymbolQuestion() {
@@ -1250,33 +1258,25 @@ function runLocateQuestion() {
 
   const mark = quiz.current;
   const codeStr = mark.code && mark.code !== '★' ? ` [${mark.code}]` : '';
-  document.getElementById('quiz-question').textContent = 'Find this mark on the chart:';
+  document.getElementById('quiz-question').textContent = 'Find and click this mark on the chart:';
   document.getElementById('quiz-target').style.display = 'block';
   document.getElementById('quiz-target').textContent = mark.name + codeStr;
   document.getElementById('quiz-options').innerHTML = '';
-  document.getElementById('quiz-feedback').textContent = 'Click the chart…';
+  document.getElementById('quiz-feedback').textContent = 'Click the marker on the chart…';
 
   map.getContainer().classList.add('quiz-locate');
-  map.once('click', handleLocateClick);
 }
 
-function handleLocateClick(e) {
+function handleLocateClick(correct) {
   if (quiz.answered || quiz.phase !== 'locate') return;
   quiz.answered = true;
   const pts = difficulty === 'hard' ? 2 : 1;
   quiz.total += pts;
   map.getContainer().classList.remove('quiz-locate');
-  map.off('click', handleLocateClick);
 
-  const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
-  const dist = Math.sqrt(
-    Math.pow(e.latlng.lat - target[0], 2) +
-    Math.pow(e.latlng.lng - target[1], 2)
-  );
-  const correct = dist < 120;
-  const close   = dist < 350;
   if (correct) quiz.score += pts;
 
+  const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
   if (locateCircle) map.removeLayer(locateCircle);
   locateCircle = L.circleMarker(target, {
     radius: 18,
@@ -1289,16 +1289,8 @@ function handleLocateClick(e) {
   if (leafletMarkers[quiz.current.id]) leafletMarkers[quiz.current.id].openTooltip();
 
   const fb = document.getElementById('quiz-feedback');
-  if (correct) {
-    fb.className = 'quiz-feedback feedback-correct';
-    fb.textContent = `✓ Spot on! (${Math.round(dist)}px away)`;
-  } else if (close) {
-    fb.className = 'quiz-feedback feedback-hint';
-    fb.textContent = `Close! ${Math.round(dist)}px away. Circle = actual position.`;
-  } else {
-    fb.className = 'quiz-feedback feedback-wrong';
-    fb.textContent = `✗ ${Math.round(dist)}px away. Circle = actual position.`;
-  }
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct ? '✓ Correct!' : `✗ Wrong — the circle shows where it is.`;
 
   quiz.marksAnswered++;
   const remaining = ROUND_SIZE - quiz.marksAnswered;
