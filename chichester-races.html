@@ -685,10 +685,15 @@ const MARKS = [
     type:"Starboard (S)", rounding:"Leave to starboard",
     notes:"Lower Thorney Channel. Gybe or leeward mark.", club:"ISC" },
 
-  { id:"spit_v",        code:"V",    name:"Spit",
+  { id:"spit_v",        code:"",     name:"Spit",
     pos: px(1214, 1055),color:"#FF9900", badgeClass:"badge-orange",
     type:"Race mark", rounding:"As per sailing instructions",
     notes:"Near the Thorney Island spit. Turning mark in channel courses.", club:"ISC" },
+
+  { id:"v_inflatable",  code:"V",    name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
 
   { id:"pivot",         code:"",     name:"Pivot",
     pos: px(753, 1047), color:"#FF9900", badgeClass:"badge-orange",
@@ -777,7 +782,7 @@ const MARKS = [
     type:"Port (P)", rounding:"Leave to port",
     notes:"Near Bosham. Turning mark in longer upper harbour courses.", club:"ISC" },
 
-  { id:"baker_xz",      code:"X / Z",name:"Baker",
+  { id:"baker_xz",      code:"Z",    name:"Baker",
     pos: px(1458, 822), color:"#FF3300", badgeClass:"badge-red",
     type:"Port (P)", rounding:"Leave to port",
     notes:"Bosham area. Turning mark in the longest upper harbour courses.", club:"ISC" },
@@ -925,6 +930,7 @@ function placeMarkers() {
   Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
 
   allMarks().forEach(mark => {
+    if (mark.noLocate) return;
     const latlng = mark.pos || [mark.lat, mark.lng];
     const isSelected = selectedMark && selectedMark.id === mark.id;
     const m = L.marker(latlng, { icon: makeIcon(mark.color, isSelected) })
@@ -1115,12 +1121,16 @@ function handleSymbolAnswer(answer) {
   document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
 
   const nextBtn = document.getElementById('quiz-next');
-  nextBtn.textContent = 'Find it on the map →';
+  nextBtn.textContent = quiz.current.noLocate ? 'Next →' : 'Find it on the map →';
   nextBtn.onclick = transitionToLocate;
   nextBtn.classList.add('visible');
 }
 
 function transitionToLocate() {
+  if (quiz.current.noLocate) {
+    nextQuestion();
+    return;
+  }
   quiz.answered = false;
   quiz.phase = 'locate';
   const nextBtn = document.getElementById('quiz-next');
