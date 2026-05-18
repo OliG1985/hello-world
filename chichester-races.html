@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chichester Harbour Race Marks</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a1628;
+      color: #e8f0fe;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: #0d2044;
+      border-bottom: 2px solid #1e4080;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    header .title-block h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #7eb8f7;
+    }
+
+    header .title-block p {
+      font-size: 0.75rem;
+      color: #8ea8cc;
+    }
+
+    .mode-btns {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .mode-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid #1e4080;
+      background: transparent;
+      color: #8ea8cc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .mode-btn.active {
+      background: #1a5296;
+      color: #e8f0fe;
+      border-color: #3a72be;
+    }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #map {
+      flex: 1;
+      cursor: default;
+    }
+
+    #map.quiz-locate { cursor: crosshair; }
+
+    /* Side panel */
+    #panel {
+      width: 300px;
+      flex-shrink: 0;
+      background: #0d2044;
+      border-left: 2px solid #1e4080;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 5px; }
+    .panel-body::-webkit-scrollbar-track { background: #0d2044; }
+    .panel-body::-webkit-scrollbar-thumb { background: #1e4080; border-radius: 3px; }
+
+    /* Mark card */
+    .mark-card { display: none; }
+    .mark-card.visible { display: block; }
+
+    .mark-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #7eb8f7;
+      margin-bottom: 4px;
+    }
+
+    .mark-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .badge-red    { background: #5c1010; color: #ff8a8a; }
+    .badge-yellow { background: #4a3a00; color: #ffe07a; }
+    .badge-orange { background: #4a2500; color: #ffb07a; }
+    .badge-green  { background: #0a3a18; color: #7affa8; }
+    .badge-black  { background: #222; color: #aaa; }
+    .badge-white  { background: #2a3550; color: #dde; }
+
+    .detail-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+    }
+
+    .detail-label {
+      color: #5d8ab5;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+
+    .detail-value { color: #c8daf0; line-height: 1.4; }
+
+    .coords {
+      font-size: 0.75rem;
+      color: #4a6a90;
+      margin-top: 12px;
+      font-family: monospace;
+    }
+
+    .hint-text {
+      color: #5d8ab5;
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 20px 10px;
+      line-height: 1.6;
+    }
+
+    /* Mark list */
+    .mark-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid #132d55;
+    }
+
+    .mark-list-item:hover { background: #132d55; }
+
+    .mark-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+
+    .mark-list-name {
+      font-size: 0.82rem;
+      color: #c8daf0;
+    }
+
+    .mark-list-type {
+      font-size: 0.7rem;
+      color: #5d8ab5;
+    }
+
+    /* Quiz */
+    .quiz-panel { text-align: center; }
+
+    .quiz-status {
+      font-size: 0.8rem;
+      color: #8ea8cc;
+      margin-bottom: 14px;
+    }
+
+    .quiz-prompt {
+      font-size: 0.9rem;
+      color: #e8f0fe;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .quiz-target {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #7eb8f7;
+      margin-bottom: 8px;
+    }
+
+    .quiz-feedback {
+      min-height: 2em;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .feedback-correct { color: #2ecc71; }
+    .feedback-wrong   { color: #e74c3c; }
+    .feedback-hint    { color: #f39c12; }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .qbtn {
+      width: 100%;
+      padding: 9px 12px;
+      background: #132d55;
+      border: 1px solid #1e4080;
+      border-radius: 8px;
+      color: #c8daf0;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s;
+    }
+
+    .qbtn:hover:not(:disabled) { background: #1a3a6e; }
+    .qbtn.correct { background: #0d3a1e; border-color: #2ecc71; color: #2ecc71; }
+    .qbtn.wrong   { background: #3a0d0d; border-color: #e74c3c; color: #e74c3c; }
+
+    .next-btn {
+      margin-top: 14px;
+      padding: 9px 22px;
+      background: #1a5296;
+      border: none;
+      border-radius: 8px;
+      color: #e8f0fe;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+
+    .next-btn.visible { display: inline-block; }
+
+    /* Add mark */
+    .add-mark-bar {
+      padding: 10px 14px;
+      background: #0a1e3a;
+      border-top: 1px solid #1e4080;
+      flex-shrink: 0;
+    }
+
+    .add-mark-btn {
+      width: 100%;
+      padding: 8px;
+      background: transparent;
+      border: 1px dashed #1e4080;
+      border-radius: 6px;
+      color: #5d8ab5;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .add-mark-btn:hover, .add-mark-btn.active {
+      border-color: #3a72be;
+      color: #7eb8f7;
+    }
+
+    .add-mark-form {
+      display: none;
+      padding-top: 8px;
+    }
+
+    .add-mark-form.visible { display: block; }
+
+    .add-mark-form input, .add-mark-form select, .add-mark-form textarea {
+      width: 100%;
+      margin-bottom: 6px;
+      padding: 6px 8px;
+      background: #0d2044;
+      border: 1px solid #1e4080;
+      border-radius: 4px;
+      color: #e8f0fe;
+      font-size: 0.78rem;
+    }
+
+    .add-mark-form label {
+      display: block;
+      font-size: 0.72rem;
+      color: #5d8ab5;
+      margin-bottom: 2px;
+    }
+
+    .form-row { display: flex; gap: 6px; }
+    .form-row > * { flex: 1; }
+
+    .save-btn {
+      width: 100%;
+      padding: 7px;
+      background: #1a5296;
+      border: none;
+      border-radius: 6px;
+      color: #e8f0fe;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    /* Leaflet tooltip override */
+    .mark-tooltip {
+      background: #0d2044 !important;
+      border: 1px solid #1e4080 !important;
+      color: #7eb8f7 !important;
+      font-size: 0.78rem !important;
+      padding: 4px 8px !important;
+      box-shadow: none !important;
+    }
+
+    .mark-tooltip::before { border-top-color: #1e4080 !important; }
+
+    /* Quiz locate ring */
+    .quiz-ring {
+      border: 3px solid #f39c12;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .disclaimer {
+      font-size: 0.65rem;
+      color: #3a5a80;
+      text-align: center;
+      padding: 4px 10px;
+      border-top: 1px solid #132d55;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:1.5rem">⛵</span>
+  <div class="title-block">
+    <h1>Chichester Harbour Race Marks</h1>
+    <p>Learn &amp; quiz yourself on local racing buoys</p>
+  </div>
+  <div class="mode-btns">
+    <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
+    <button class="mode-btn" id="btn-name-quiz" onclick="setMode('name-quiz')">Name Quiz</button>
+    <button class="mode-btn" id="btn-locate-quiz" onclick="setMode('locate-quiz')">Locate Quiz</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div id="map"></div>
+
+  <div id="panel">
+    <div class="panel-body" id="panel-body">
+      <!-- content injected by JS -->
+    </div>
+
+    <div class="add-mark-bar" id="add-mark-bar">
+      <button class="add-mark-btn" id="add-toggle" onclick="toggleAddMode()">+ Add a custom mark</button>
+      <div class="add-mark-form" id="add-form">
+        <p style="font-size:0.72rem;color:#5d8ab5;margin-bottom:6px;">Click the map to set position, then fill in details.</p>
+        <label>Name</label>
+        <input type="text" id="new-name" placeholder="e.g. Winner Buoy" />
+        <div class="form-row">
+          <div>
+            <label>Colour</label>
+            <select id="new-color">
+              <option value="#FF3300">Red</option>
+              <option value="#FF9900">Orange</option>
+              <option value="#FFFF00">Yellow</option>
+              <option value="#00BB44">Green</option>
+              <option value="#222222">Black</option>
+              <option value="#FFFFFF">White</option>
+              <option value="#FF6600">Orange/Red</option>
+            </select>
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="new-type">
+              <option>Port rounding</option>
+              <option>Starboard rounding</option>
+              <option>Start mark</option>
+              <option>Finish mark</option>
+              <option>Gate mark</option>
+              <option>Channel mark</option>
+              <option>Danger mark</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <label>Notes (optional)</label>
+        <textarea id="new-notes" rows="2" placeholder="Rounding instructions, tips..."></textarea>
+        <button class="save-btn" onclick="saveCustomMark()">Save Mark</button>
+      </div>
+    </div>
+
+    <div class="disclaimer">Positions approximate — for learning only, not for navigation</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── Mark data ────────────────────────────────────────────────────────────────
+// Approximate positions of well-known Chichester Harbour racing marks.
+// Coordinates sourced from general knowledge — verify with your sailing club.
+const MARKS = [
+  {
+    id: "chichester_bar",
+    name: "Chichester Bar Beacon",
+    lat: 50.7633, lng: -0.9383,
+    color: "#FF3300",
+    badgeClass: "badge-red",
+    type: "Entrance mark",
+    rounding: "Leave to port entering harbour",
+    notes: "Red can buoy marking the bar at the harbour entrance. Key reference mark for all racing in the outer harbour.",
+    club: "General"
+  },
+  {
+    id: "nw_winner",
+    name: "NW Winner",
+    lat: 50.7567, lng: -0.9550,
+    color: "#FF3300",
+    badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port inbound",
+    notes: "Marks the NW end of the Winner Bank. A frequent turning mark in Hayling Bay races.",
+    club: "HISC area"
+  },
+  {
+    id: "winner",
+    name: "Winner Buoy",
+    lat: 50.7433, lng: -0.9250,
+    color: "#FF3300",
+    badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port",
+    notes: "Marks the eastern side of the Winner Bank. Used as a windward/leeward mark in many courses.",
+    club: "HISC area"
+  },
+  {
+    id: "east_head",
+    name: "East Head",
+    lat: 50.7717, lng: -0.8983,
+    color: "#FFFF00",
+    badgeClass: "badge-yellow",
+    type: "Race mark",
+    rounding: "Variable — check sailing instructions",
+    notes: "The sandy spit forming the west side of the harbour entrance. Often used as a reaching mark.",
+    club: "General"
+  },
+  {
+    id: "pilsey",
+    name: "Pilsey Island",
+    lat: 50.7900, lng: -0.9167,
+    color: "#FF9900",
+    badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "Variable — check sailing instructions",
+    notes: "Small island near the north shore. Used as a mark in longer harbour courses.",
+    club: "General"
+  },
+  {
+    id: "camber",
+    name: "Camber Beacon",
+    lat: 50.7967, lng: -0.8817,
+    color: "#FFFF00",
+    badgeClass: "badge-yellow",
+    type: "Race mark",
+    rounding: "Leave to starboard",
+    notes: "Beacon near Itchenor. Common turn mark for Chichester YC and Itchenor SC courses.",
+    club: "CYC / Itchenor SC"
+  },
+  {
+    id: "stocker",
+    name: "Stocker Sands",
+    lat: 50.8133, lng: -0.8933,
+    color: "#FF3300",
+    badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port heading north",
+    notes: "Marks the shoal extending south of Bosham Channel junction. Reference mark for upper harbour racing.",
+    club: "General"
+  },
+  {
+    id: "deepend",
+    name: "Deep End",
+    lat: 50.7783, lng: -0.8683,
+    color: "#00BB44",
+    badgeClass: "badge-green",
+    type: "Starboard lateral",
+    rounding: "Leave to starboard",
+    notes: "Green starboard mark in the main channel. Often used in course-setting for Chichester YC races.",
+    club: "CYC area"
+  },
+  {
+    id: "itchenor_reach",
+    name: "Itchenor Reach",
+    lat: 50.8017, lng: -0.8650,
+    color: "#FFFFFF",
+    badgeClass: "badge-white",
+    type: "Safe water / race mark",
+    rounding: "As instructed",
+    notes: "The stretch of water off Itchenor. Committee boat often stationed here for club racing starts.",
+    club: "Itchenor SC"
+  },
+  {
+    id: "hayling_start",
+    name: "HISC Start Line",
+    lat: 50.7700, lng: -0.9583,
+    color: "#FF9900",
+    badgeClass: "badge-orange",
+    type: "Start / Finish",
+    rounding: "Cross line between committee boat and pin",
+    notes: "Approximate position of the Hayling Island SC start area off the club. Actual position varies by race.",
+    club: "HISC"
+  }
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let mode = 'explore';
+let selectedMark = null;
+let customMarks = JSON.parse(localStorage.getItem('chich_custom_marks') || '[]');
+let addingCustom = false;
+let pendingCustomLatLng = null;
+
+// Quiz state
+let quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [50.790, -0.910],
+  zoom: 12
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+  maxZoom: 19
+}).addTo(map);
+
+// OpenSeaMap nautical overlay
+L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+  opacity: 0.8,
+  attribution: '© <a href="http://www.openseamap.org">OpenSeaMap</a>'
+}).addTo(map);
+
+// ─── Marker helpers ───────────────────────────────────────────────────────────
+function makeIcon(color, isSelected) {
+  const r = isSelected ? 11 : 8;
+  const glow = isSelected ? `filter:drop-shadow(0 0 6px ${color})` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${r*3}" height="${r*4}">
+    <circle cx="${r*1.5}" cy="${r}" r="${r}" fill="${color}" stroke="${isSelected ? '#fff' : '#333'}" stroke-width="${isSelected ? 2 : 1.5}" style="${glow}"/>
+    <line x1="${r*1.5}" y1="${r*2}" x2="${r*1.5}" y2="${r*3.5}" stroke="#888" stroke-width="1.5"/>
+    <ellipse cx="${r*1.5}" cy="${r*3.7}" rx="${r*0.6}" ry="${r*0.2}" fill="rgba(0,50,100,0.4)"/>
+  </svg>`;
+  return L.icon({
+    iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
+    iconSize: [r * 3, r * 4],
+    iconAnchor: [r * 1.5, r * 4],
+    popupAnchor: [0, -r * 4]
+  });
+}
+
+const leafletMarkers = {};
+
+function allMarks() {
+  return [...MARKS, ...customMarks];
+}
+
+function placeMarkers() {
+  // Clear existing
+  Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+  Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
+
+  allMarks().forEach(mark => {
+    const isSelected = selectedMark && selectedMark.id === mark.id;
+    const m = L.marker([mark.lat, mark.lng], { icon: makeIcon(mark.color, isSelected) })
+      .addTo(map)
+      .bindTooltip(mark.name, { direction: 'top', className: 'mark-tooltip' });
+
+    m.on('click', () => {
+      if (mode === 'explore') {
+        selectMark(mark);
+      } else if (mode === 'name-quiz') {
+        handleNameQuizClick(mark, m);
+      }
+    });
+
+    leafletMarkers[mark.id] = m;
+  });
+}
+
+// ─── Mode switching ───────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  ['explore', 'name-quiz', 'locate-quiz'].forEach(id => {
+    document.getElementById('btn-' + id).classList.toggle('active', id === m);
+  });
+
+  map.getContainer().classList.toggle('quiz-locate', m === 'locate-quiz');
+  document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
+
+  selectedMark = null;
+  placeMarkers();
+
+  if (m === 'explore') {
+    renderExplorePanel();
+  } else if (m === 'name-quiz') {
+    startNameQuiz();
+  } else if (m === 'locate-quiz') {
+    startLocateQuiz();
+  }
+}
+
+// ─── Explore mode ─────────────────────────────────────────────────────────────
+function renderExplorePanel() {
+  const pb = document.getElementById('panel-body');
+  const marks = allMarks();
+
+  let html = '<p class="hint-text" style="margin-bottom:12px">Click a buoy on the map or a mark below</p>';
+  marks.forEach(mark => {
+    html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
+      <div class="mark-dot" style="background:${mark.color}"></div>
+      <div>
+        <div class="mark-list-name">${mark.name}</div>
+        <div class="mark-list-type">${mark.type} · ${mark.club || 'Custom'}</div>
+      </div>
+    </div>`;
+  });
+
+  pb.innerHTML = html;
+  window.MARK_MAP = {};
+  allMarks().forEach(mk => window.MARK_MAP[mk.id] = mk);
+}
+
+function selectMark(mark) {
+  selectedMark = mark;
+  placeMarkers();
+
+  // Pan to mark
+  map.panTo([mark.lat, mark.lng]);
+
+  const pb = document.getElementById('panel-body');
+
+  const latStr = mark.lat.toFixed(4) + '°N';
+  const lngStr = Math.abs(mark.lng).toFixed(4) + '°W';
+  const dms = toDMS(mark.lat, mark.lng);
+
+  pb.innerHTML = `
+    <div style="margin-bottom:10px">
+      <button onclick="renderExplorePanel()" style="background:none;border:none;color:#5d8ab5;cursor:pointer;font-size:0.78rem">← All marks</button>
+    </div>
+    <div class="mark-name">${mark.name}</div>
+    <span class="mark-badge ${mark.badgeClass || 'badge-yellow'}">${mark.type}</span>
+
+    <div class="detail-row">
+      <span class="detail-label">Club</span>
+      <span class="detail-value">${mark.club || 'Custom'}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Rounding</span>
+      <span class="detail-value">${mark.rounding || '—'}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Notes</span>
+      <span class="detail-value">${mark.notes || '—'}</span>
+    </div>
+    <div class="coords">${dms}<br>${latStr}, ${lngStr}</div>
+    ${mark.custom ? `<button onclick="deleteCustomMark('${mark.id}')" style="margin-top:14px;padding:6px 12px;background:#3a0d0d;border:1px solid #7a2020;border-radius:6px;color:#ff8a8a;font-size:0.75rem;cursor:pointer">Delete mark</button>` : ''}
+  `;
+
+  window.MARK_MAP = window.MARK_MAP || {};
+  window.MARK_MAP[mark.id] = mark;
+}
+
+function toDMS(lat, lng) {
+  function fmt(val, pos, neg) {
+    const d = Math.floor(Math.abs(val));
+    const mf = (Math.abs(val) - d) * 60;
+    const m = Math.floor(mf);
+    const s = ((mf - m) * 60).toFixed(0);
+    return `${d}°${m}'${s}" ${val >= 0 ? pos : neg}`;
+  }
+  return fmt(lat, 'N', 'S') + '  ' + fmt(lng, 'E', 'W');
+}
+
+// ─── Name quiz ────────────────────────────────────────────────────────────────
+function startNameQuiz() {
+  quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
+  nextNameQuestion();
+}
+
+function nextNameQuestion() {
+  const marks = allMarks();
+  if (quiz.queue.length === 0) {
+    quiz.queue = shuffle([...marks]);
+  }
+  quiz.q = quiz.queue.pop();
+  quiz.answered = false;
+
+  // Pan to the mark
+  map.panTo([quiz.q.lat, quiz.q.lng]);
+
+  // Pulse the marker
+  if (leafletMarkers[quiz.q.id]) {
+    leafletMarkers[quiz.q.id].openTooltip();
+  }
+
+  // Build distractors
+  const distractors = shuffle(marks.filter(m => m.id !== quiz.q.id)).slice(0, 3).map(m => m.name);
+  const options = shuffle([quiz.q.name, ...distractors]);
+
+  const pb = document.getElementById('panel-body');
+  pb.innerHTML = `
+    <div class="quiz-panel">
+      <div class="quiz-status">Score: ${quiz.score} / ${quiz.total}</div>
+      <div class="quiz-prompt">What is this mark? (highlighted on map)</div>
+      <div class="quiz-options">${options.map(o =>
+        `<button class="qbtn" onclick="answerNameQuiz('${escapeQ(o)}')">${o}</button>`
+      ).join('')}</div>
+      <div class="quiz-feedback" id="qfb"></div>
+      <button class="next-btn" id="qnext" onclick="nextNameQuestion()">Next →</button>
+    </div>
+  `;
+}
+
+function answerNameQuiz(answer) {
+  if (quiz.answered) return;
+  quiz.answered = true;
+  quiz.total++;
+
+  const correct = answer === quiz.q.name;
+  if (correct) quiz.score++;
+
+  document.querySelectorAll('.qbtn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === quiz.q.name) btn.classList.add('correct');
+    else if (btn.textContent === answer && !correct) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('qfb');
+  if (correct) {
+    fb.className = 'quiz-feedback feedback-correct';
+    fb.textContent = '✓ Correct! ' + quiz.q.rounding;
+  } else {
+    fb.className = 'quiz-feedback feedback-wrong';
+    fb.textContent = '✗ That was ' + quiz.q.name + '. ' + quiz.q.rounding;
+  }
+
+  document.getElementById('qnext').classList.add('visible');
+
+  // Update score line
+  const status = document.querySelector('.quiz-status');
+  if (status) status.textContent = `Score: ${quiz.score} / ${quiz.total}`;
+}
+
+// ─── Locate quiz ──────────────────────────────────────────────────────────────
+let locateCircle = null;
+
+function startLocateQuiz() {
+  quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
+  map.on('click', handleLocateClick);
+  nextLocateQuestion();
+}
+
+function nextLocateQuestion() {
+  const marks = allMarks();
+  if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
+  quiz.q = quiz.queue.pop();
+  quiz.answered = false;
+
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  // Zoom out so user has to find it
+  map.setView([50.790, -0.910], 12);
+
+  // Hide tooltips so mark name isn't visible
+  Object.values(leafletMarkers).forEach(m => m.closeTooltip());
+
+  const pb = document.getElementById('panel-body');
+  pb.innerHTML = `
+    <div class="quiz-panel">
+      <div class="quiz-status">Score: ${quiz.score} / ${quiz.total}</div>
+      <div class="quiz-prompt">Click on the map where you think this mark is:</div>
+      <div class="quiz-target">${quiz.q.name}</div>
+      <div class="detail-row" style="justify-content:center;margin-bottom:8px">
+        <span class="mark-badge ${quiz.q.badgeClass || 'badge-yellow'}">${quiz.q.type}</span>
+      </div>
+      <div class="quiz-feedback" id="qfb">Click the map...</div>
+      <button class="next-btn" id="qnext" onclick="nextLocateQuestion()">Next →</button>
+    </div>
+  `;
+}
+
+function handleLocateClick(e) {
+  if (mode !== 'locate-quiz' || quiz.answered) return;
+  quiz.answered = true;
+  quiz.total++;
+
+  const dist = map.distance(e.latlng, [quiz.q.lat, quiz.q.lng]);
+  const correct = dist < 1000; // within 1 km
+  const close   = dist < 2500;
+
+  if (correct) quiz.score++;
+
+  // Show where the mark actually is
+  if (locateCircle) map.removeLayer(locateCircle);
+  locateCircle = L.circle([quiz.q.lat, quiz.q.lng], {
+    radius: 200,
+    color: correct ? '#2ecc71' : '#e74c3c',
+    fillOpacity: 0.25,
+    weight: 2
+  }).addTo(map);
+
+  // Pan to reveal the answer
+  map.panTo([quiz.q.lat, quiz.q.lng]);
+  if (leafletMarkers[quiz.q.id]) leafletMarkers[quiz.q.id].openTooltip();
+
+  const fb = document.getElementById('qfb');
+  if (correct) {
+    fb.className = 'quiz-feedback feedback-correct';
+    fb.textContent = `✓ Spot on! Within ${Math.round(dist)}m`;
+  } else if (close) {
+    fb.className = 'quiz-feedback feedback-hint';
+    fb.textContent = `Close — ${(dist / 1000).toFixed(1)}km away. Circle shows actual position.`;
+  } else {
+    fb.className = 'quiz-feedback feedback-wrong';
+    fb.textContent = `✗ ${(dist / 1000).toFixed(1)}km out. Circle shows actual position.`;
+  }
+
+  const status = document.querySelector('.quiz-status');
+  if (status) status.textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('qnext').classList.add('visible');
+}
+
+// ─── Custom marks ─────────────────────────────────────────────────────────────
+function toggleAddMode() {
+  addingCustom = !addingCustom;
+  document.getElementById('add-toggle').classList.toggle('active', addingCustom);
+  document.getElementById('add-form').classList.toggle('visible', addingCustom);
+  if (addingCustom) {
+    map.once('click', e => {
+      pendingCustomLatLng = e.latlng;
+      document.getElementById('add-form').querySelector('input').focus();
+      document.querySelector('#add-form p').textContent =
+        `Position set: ${e.latlng.lat.toFixed(4)}°N, ${Math.abs(e.latlng.lng).toFixed(4)}°W — fill in details below.`;
+    });
+  } else {
+    pendingCustomLatLng = null;
+  }
+}
+
+function saveCustomMark() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) { alert('Please enter a name for the mark.'); return; }
+  if (!pendingCustomLatLng) { alert('Please click the map first to set the position.'); return; }
+
+  const color = document.getElementById('new-color').value;
+  const type  = document.getElementById('new-type').value;
+  const notes = document.getElementById('new-notes').value.trim();
+
+  const badgeMap = {
+    '#FF3300': 'badge-red', '#FF9900': 'badge-orange', '#FFFF00': 'badge-yellow',
+    '#00BB44': 'badge-green', '#222222': 'badge-black', '#FFFFFF': 'badge-white',
+    '#FF6600': 'badge-orange'
+  };
+
+  const mark = {
+    id: 'custom_' + Date.now(),
+    name, type, notes, color,
+    badgeClass: badgeMap[color] || 'badge-yellow',
+    lat: pendingCustomLatLng.lat,
+    lng: pendingCustomLatLng.lng,
+    rounding: type,
+    club: 'Custom',
+    custom: true
+  };
+
+  customMarks.push(mark);
+  localStorage.setItem('chich_custom_marks', JSON.stringify(customMarks));
+
+  addingCustom = false;
+  pendingCustomLatLng = null;
+  document.getElementById('add-toggle').classList.remove('active');
+  document.getElementById('add-form').classList.remove('visible');
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-notes').value = '';
+
+  placeMarkers();
+  renderExplorePanel();
+  selectMark(mark);
+}
+
+function deleteCustomMark(id) {
+  customMarks = customMarks.filter(m => m.id !== id);
+  localStorage.setItem('chich_custom_marks', JSON.stringify(customMarks));
+  selectedMark = null;
+  placeMarkers();
+  renderExplorePanel();
+}
+
+window.deleteCustomMark = deleteCustomMark;
+window.renderExplorePanel = renderExplorePanel;
+window.selectMark = selectMark;
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeQ(s) {
+  return s.replace(/'/g, "\\'");
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+placeMarkers();
+renderExplorePanel();
+</script>
+</body>
+</html>
