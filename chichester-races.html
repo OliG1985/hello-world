@@ -54,8 +54,49 @@
       flex: 1;
       background: #b8cfe0;
       cursor: default;
+      position: relative;
     }
     #map.quiz-locate { cursor: crosshair; }
+
+    /* Hard mode: dim the chart image to obscure labels */
+    #map.hard-mode .leaflet-image-layer {
+      filter: brightness(0.55) contrast(0.7) saturate(0.4);
+    }
+
+    /* Key blocker overlay — sits over the bottom-right key area */
+    #key-blocker {
+      display: none;
+      position: absolute;
+      bottom: 0; right: 0;
+      width: 240px; height: 260px;
+      background: #1a2a1a;
+      border-top-left-radius: 6px;
+      border: 1px solid #2a4a2a;
+      z-index: 500;
+      pointer-events: none;
+    }
+    #key-blocker.visible { display: block; }
+
+    /* Difficulty toggle in header */
+    .diff-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      color: #8ea8cc;
+      margin-left: 8px;
+    }
+    .diff-btn {
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid #1e4080;
+      background: transparent;
+      color: #8ea8cc;
+      font-size: 0.72rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .diff-btn.active { background: #6a2000; color: #ffb07a; border-color: #cc5500; }
 
     /* ── Panel ── */
     #panel {
@@ -466,15 +507,20 @@
     <p>ISC Course Card Alpha 2025–2028</p>
   </div>
   <div class="mode-btns">
-    <button class="mode-btn active" id="btn-explore"      onclick="setMode('explore')">Explore</button>
-    <button class="mode-btn"        id="btn-name-quiz"    onclick="setMode('name-quiz')">Name Quiz</button>
-    <button class="mode-btn"        id="btn-locate-quiz"  onclick="setMode('locate-quiz')">Locate Quiz</button>
+    <button class="mode-btn active" id="btn-explore"   onclick="setMode('explore')">Explore</button>
+    <button class="mode-btn"        id="btn-quiz"      onclick="setMode('quiz')">Quiz</button>
     <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')">⚙ Calibrate</button>
+  </div>
+  <div class="diff-toggle">
+    <button class="diff-btn active" id="diff-easy" onclick="setDifficulty('easy')">Easy</button>
+    <button class="diff-btn"        id="diff-hard" onclick="setDifficulty('hard')">Hard</button>
   </div>
 </header>
 
 <div class="layout">
-  <div id="map"></div>
+  <div id="map">
+    <div id="key-blocker"></div>
+  </div>
 
   <div id="panel">
     <button id="panel-toggle" onclick="togglePanel()" title="Collapse/expand panel">◀</button>
@@ -888,10 +934,9 @@ function placeMarkers() {
     m.on('click', e => {
       if (mode === 'explore') {
         selectMark(mark);
-      } else if (mode === 'name-quiz') {
-        handleNameQuizAnswer(mark.name);
-      } else if (mode === 'locate-quiz' && !quiz.answered) {
-        // Clicking directly on a marker counts as clicking its exact position
+      } else if (mode === 'quiz' && quiz.phase === 'name' && !quiz.answered) {
+        handleSymbolAnswer(mark.name);
+      } else if (mode === 'quiz' && quiz.phase === 'locate' && !quiz.answered) {
         L.DomEvent.stopPropagation(e);
         map.off('click', handleLocateClick);
         handleLocateClick({ latlng: L.latLng(latlng[0], latlng[1]) });
@@ -990,12 +1035,14 @@ function buildMarkList() {
 }
 
 // ─── Quiz ─────────────────────────────────────────────────────────────────────
+// phase 'name'  — show code badge, pick the mark name from multiple choice
+// phase 'locate' — find the mark on the chart by clicking
+
 function startQuiz() {
-  quiz = { score: 0, total: 0, current: null, answered: false, queue: [] };
+  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name' };
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   nextQuestion();
 }
-
-let quizMode = 'name'; // 'name' or 'locate'
 
 function nextQuestion() {
   const marks = allMarks();
@@ -1003,57 +1050,51 @@ function nextQuestion() {
   quiz.current = quiz.queue.pop();
   quiz.answered = false;
 
-  // Alternate between name and locate quiz every few questions
-  quizMode = (quiz.total % 2 === 0) ? 'name' : 'locate';
-
   document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
   document.getElementById('quiz-feedback').textContent = '';
-  document.getElementById('quiz-next').classList.remove('visible');
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.classList.remove('visible');
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = nextQuestion;
 
-  if (quizMode === 'name') {
-    runNameQuestion(marks);
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  // Coded marks (A-Z, 0-9) get the symbol → name step first; uncoded go straight to locate
+  const hasCode = quiz.current.code && quiz.current.code !== '★';
+  if (hasCode) {
+    quiz.phase = 'name';
+    runSymbolQuestion();
   } else {
+    quiz.phase = 'locate';
     runLocateQuestion();
   }
 }
 
-function runNameQuestion(marks) {
-  // Highlight the mark on the map
-  selectedMark = quiz.current;
-  placeMarkers();
-  map.panTo(quiz.current.pos || [quiz.current.lat, quiz.current.lng]);
-
-  const distractors = shuffle(marks.filter(m => m.id !== quiz.current.id)).slice(0, 3).map(m => m.name);
-  const options = shuffle([quiz.current.name, ...distractors]);
-
-  document.getElementById('quiz-question').textContent = 'What is this mark? (highlighted on chart)';
-  document.getElementById('quiz-target').style.display = 'none';
-  document.getElementById('quiz-options').innerHTML = options.map(o =>
-    `<button class="qbtn" onclick="handleNameQuizAnswer('${escQ(o)}')">${o}</button>`
-  ).join('');
-
-  map.getContainer().classList.remove('quiz-locate');
-  map.off('click', handleLocateClick);
-}
-
-function runLocateQuestion() {
+function runSymbolQuestion() {
   selectedMark = null;
   placeMarkers();
   map.fitBounds(imgBounds, { padding: [10, 10] });
-  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
 
-  document.getElementById('quiz-question').textContent = 'Click on the chart where this mark is:';
+  const mark = quiz.current;
+  const marks = allMarks();
+  const distractors = shuffle(marks.filter(m => m.id !== mark.id)).slice(0, 3).map(m => m.name);
+  const options = shuffle([mark.name, ...distractors]);
+
+  document.getElementById('quiz-question').textContent = 'Which mark has this code?';
   document.getElementById('quiz-target').style.display = 'block';
-  document.getElementById('quiz-target').textContent = quiz.current.name;
-  document.getElementById('quiz-options').innerHTML = '';
-  document.getElementById('quiz-feedback').textContent = 'Click the chart...';
-
-  map.getContainer().classList.add('quiz-locate');
-  map.once('click', handleLocateClick);
+  document.getElementById('quiz-target').innerHTML =
+    `<span style="display:inline-block;font-size:2rem;font-weight:900;color:#f39c12;` +
+    `background:#2a1f00;border:2px solid #f39c12;border-radius:8px;` +
+    `padding:6px 22px;letter-spacing:2px;min-width:60px;text-align:center">${mark.code}</span>`;
+  document.getElementById('quiz-options').innerHTML = options.map(o =>
+    `<button class="qbtn" onclick="handleSymbolAnswer('${escQ(o)}')">${o}</button>`
+  ).join('');
 }
 
-function handleNameQuizAnswer(answer) {
-  if (quiz.answered || quizMode !== 'name') return;
+function handleSymbolAnswer(answer) {
+  if (quiz.answered || quiz.phase !== 'name') return;
   quiz.answered = true;
   quiz.total++;
 
@@ -1069,25 +1110,56 @@ function handleNameQuizAnswer(answer) {
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
   fb.textContent = correct
-    ? `✓ Correct! ${quiz.current.rounding}`
-    : `✗ That was ${quiz.current.name}. ${quiz.current.rounding}`;
-
+    ? '✓ Correct! Now find it on the map.'
+    : `✗ That was ${quiz.current.name}. Now find it on the map.`;
   document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
-  document.getElementById('quiz-next').classList.add('visible');
+
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.textContent = 'Find it on the map →';
+  nextBtn.onclick = transitionToLocate;
+  nextBtn.classList.add('visible');
+}
+
+function transitionToLocate() {
+  quiz.answered = false;
+  quiz.phase = 'locate';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = nextQuestion;
+  nextBtn.classList.remove('visible');
+  runLocateQuestion();
+}
+
+function runLocateQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  const mark = quiz.current;
+  const codeStr = mark.code && mark.code !== '★' ? ` [${mark.code}]` : '';
+  document.getElementById('quiz-question').textContent = 'Find this mark on the chart:';
+  document.getElementById('quiz-target').style.display = 'block';
+  document.getElementById('quiz-target').textContent = mark.name + codeStr;
+  document.getElementById('quiz-options').innerHTML = '';
+  document.getElementById('quiz-feedback').textContent = 'Click the chart…';
+
+  map.getContainer().classList.add('quiz-locate');
+  map.once('click', handleLocateClick);
 }
 
 function handleLocateClick(e) {
-  if (quiz.answered || quizMode !== 'locate') return;
+  if (quiz.answered || quiz.phase !== 'locate') return;
   quiz.answered = true;
   quiz.total++;
   map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
 
   const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
   const dist = Math.sqrt(
     Math.pow(e.latlng.lat - target[0], 2) +
     Math.pow(e.latlng.lng - target[1], 2)
   );
-  // dist is in pixels (CRS.Simple units). 100px ~ very good, 300px ~ close
   const correct = dist < 120;
   const close   = dist < 350;
   if (correct) quiz.score++;
@@ -1097,8 +1169,7 @@ function handleLocateClick(e) {
     radius: 18,
     color: correct ? '#2ecc71' : '#e74c3c',
     fillColor: correct ? '#2ecc71' : '#e74c3c',
-    fillOpacity: 0.3,
-    weight: 2
+    fillOpacity: 0.3, weight: 2
   }).addTo(map);
 
   map.panTo(target);
@@ -1276,7 +1347,7 @@ function setMode(m) {
   prevMode = m;
   mode = m;
 
-  ['explore', 'name-quiz', 'locate-quiz', 'calibrate'].forEach(id =>
+  ['explore', 'quiz', 'calibrate'].forEach(id =>
     document.getElementById('btn-' + id)?.classList.toggle('active', id === m));
 
   map.getContainer().classList.remove('quiz-locate');
@@ -1288,15 +1359,13 @@ function setMode(m) {
 
   if (m === 'calibrate') {
     enterCalibrateMode();
+  } else if (m === 'quiz') {
+    placeMarkers();
+    switchTab('quiz');
+    startQuiz();
   } else {
     placeMarkers();
-    if (m === 'explore') {
-      clearSelection();
-    } else if (m === 'name-quiz') {
-      switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'name'; nextQuestion();
-    } else if (m === 'locate-quiz') {
-      switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'locate'; nextQuestion();
-    }
+    clearSelection();
   }
 }
 
@@ -1367,6 +1436,16 @@ window.clearSelection = clearSelection;
 window.deleteCustomMark = deleteCustomMark;
 window.MARK_MAP = {};
 allMarks().forEach(m => window.MARK_MAP[m.id] = m);
+
+// ─── Difficulty ───────────────────────────────────────────────────────────────
+let difficulty = 'easy';
+function setDifficulty(d) {
+  difficulty = d;
+  document.getElementById('diff-easy').classList.toggle('active', d === 'easy');
+  document.getElementById('diff-hard').classList.toggle('active', d === 'hard');
+  map.getContainer().classList.toggle('hard-mode', d === 'hard');
+  document.getElementById('key-blocker').classList.toggle('visible', d === 'hard');
+}
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function shuffle(arr) {
