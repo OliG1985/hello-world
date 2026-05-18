@@ -58,9 +58,9 @@
     }
     #map.quiz-locate { cursor: crosshair; }
 
-    /* Hard mode: dim the chart image to obscure labels */
+    /* Hard mode: blur the chart image to make all text illegible */
     #map.hard-mode .leaflet-image-layer {
-      filter: brightness(0.55) contrast(0.7) saturate(0.4);
+      filter: blur(6px) brightness(0.7);
     }
 
     /* Key blocker overlay — sits over the bottom-right key area */
@@ -68,10 +68,8 @@
       display: none;
       position: absolute;
       bottom: 0; right: 0;
-      width: 240px; height: 260px;
-      background: #1a2a1a;
-      border-top-left-radius: 6px;
-      border: 1px solid #2a4a2a;
+      width: 42%; height: 45%;
+      background: #111;
       z-index: 500;
       pointer-events: none;
     }
