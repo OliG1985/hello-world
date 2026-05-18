@@ -208,6 +208,41 @@
       line-height: 1.6;
     }
 
+    /* End of round screen */
+    .round-end {
+      text-align: center;
+      padding: 12px 6px;
+    }
+    .round-score-big {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #7eb8f7;
+      margin: 8px 0 4px;
+    }
+    .round-score-label {
+      font-size: 0.78rem;
+      color: #8ea8cc;
+      margin-bottom: 14px;
+    }
+    .round-grade {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .round-play-again {
+      width: 100%;
+      padding: 10px;
+      background: #1a5296;
+      border: none;
+      border-radius: 7px;
+      color: #e8f0fe;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .round-play-again:hover { background: #2065b8; }
+
     /* Mark list */
     .mark-list-item {
       display: flex;
@@ -1084,19 +1119,26 @@ function buildMarkList() {
 // phase 'name'  — show code badge, pick the mark name from multiple choice
 // phase 'locate' — find the mark on the chart by clicking
 
+const ROUND_SIZE = 20;
+
 function startQuiz() {
-  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name' };
+  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', marksAnswered: 0 };
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   nextQuestion();
 }
 
 function nextQuestion() {
+  if (quiz.marksAnswered >= ROUND_SIZE) {
+    showRoundEnd();
+    return;
+  }
+
   const marks = allMarks();
   if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
   quiz.current = quiz.queue.pop();
   quiz.answered = false;
 
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered + 1}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
   document.getElementById('quiz-feedback').textContent = '';
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.classList.remove('visible');
@@ -1114,6 +1156,27 @@ function nextQuestion() {
     quiz.phase = 'locate';
     runLocateQuestion();
   }
+}
+
+function showRoundEnd() {
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+  selectedMark = null;
+  placeMarkers();
+
+  const pct = quiz.total > 0 ? Math.round((quiz.score / quiz.total) * 100) : 0;
+  const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
+
+  document.getElementById('tab-quiz').innerHTML = `
+    <div class="round-end">
+      <div class="round-score-label">Round complete — ${ROUND_SIZE} marks</div>
+      <div class="round-score-big">${quiz.score} / ${quiz.total}</div>
+      <div class="round-score-label">${pct}% correct</div>
+      <div class="round-grade ${pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong'}">${grade}</div>
+      <button class="round-play-again" onclick="startQuiz()">Play again</button>
+    </div>
+  `;
 }
 
 function runSymbolQuestion() {
@@ -1158,7 +1221,7 @@ function handleSymbolAnswer(answer) {
   fb.textContent = correct
     ? '✓ Correct! Now find it on the map.'
     : `✗ That was ${quiz.current.name}. Now find it on the map.`;
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered + 1}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
 
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.textContent = quiz.current.noLocate ? 'Next →' : 'Find it on the map →';
@@ -1168,6 +1231,7 @@ function handleSymbolAnswer(answer) {
 
 function transitionToLocate() {
   if (quiz.current.noLocate) {
+    quiz.marksAnswered++;
     nextQuestion();
     return;
   }
@@ -1237,8 +1301,12 @@ function handleLocateClick(e) {
     fb.textContent = `✗ ${Math.round(dist)}px away. Circle = actual position.`;
   }
 
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
-  document.getElementById('quiz-next').classList.add('visible');
+  quiz.marksAnswered++;
+  const remaining = ROUND_SIZE - quiz.marksAnswered;
+  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.textContent = remaining > 0 ? 'Next →' : 'See results →';
+  nextBtn.classList.add('visible');
 }
 
 // ─── Calibration wizard ───────────────────────────────────────────────────────
