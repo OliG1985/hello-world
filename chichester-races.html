@@ -304,14 +304,36 @@
     }
     .mark-tooltip::before { border-top-color: #1e4080 !important; }
 
-    .disclaimer {
-      font-size: 0.62rem;
-      color: #3a5a80;
-      text-align: center;
-      padding: 3px 8px;
-      border-top: 1px solid #132d55;
+    .mode-btn.calibrate { background: #4a2000; color: #ffb07a; border-color: #8a4000; }
+    .mode-btn.calibrate.active { background: #8a4000; color: #ffe0b0; border-color: #ffb07a; }
+
+    #calibrate-bar {
+      display: none;
+      background: #2a1400;
+      border-top: 2px solid #8a4000;
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      color: #ffb07a;
       flex-shrink: 0;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
     }
+    #calibrate-bar.visible { display: flex; }
+
+    #calibrate-bar strong { color: #ffe0b0; }
+
+    .cal-copy-btn {
+      padding: 5px 14px;
+      background: #8a4000;
+      border: 1px solid #ffb07a;
+      border-radius: 6px;
+      color: #ffe0b0;
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .cal-copy-btn:hover { background: #b05000; }
   </style>
 </head>
 <body>
@@ -326,8 +348,14 @@
     <button class="mode-btn active" id="btn-explore"      onclick="setMode('explore')">Explore</button>
     <button class="mode-btn"        id="btn-name-quiz"    onclick="setMode('name-quiz')">Name Quiz</button>
     <button class="mode-btn"        id="btn-locate-quiz"  onclick="setMode('locate-quiz')">Locate Quiz</button>
+    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')">⚙ Calibrate</button>
   </div>
 </header>
+
+<div id="calibrate-bar">
+  <strong>Calibrate mode:</strong> drag each dot onto its correct symbol on the chart, then copy the coordinates.
+  <button class="cal-copy-btn" onclick="copyCalibration()">Copy corrected coordinates</button>
+</div>
 
 <div class="layout">
   <div id="map"></div>
@@ -952,26 +980,77 @@ function handleLocateClick(e) {
   document.getElementById('quiz-next').classList.add('visible');
 }
 
+// ─── Calibration ─────────────────────────────────────────────────────────────
+let calibrationPositions = {}; // id → [lat, lng] (pixel coords in CRS.Simple)
+
+function enterCalibrateMode() {
+  document.getElementById('calibrate-bar').classList.add('visible');
+  // Re-place markers as draggable
+  Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+  Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
+
+  allMarks().forEach(mark => {
+    const latlng = calibrationPositions[mark.id] || mark.pos || [mark.lat, mark.lng];
+    const m = L.marker(latlng, {
+      icon: makeIcon(mark.color, false),
+      draggable: true,
+      title: mark.name
+    }).addTo(map)
+      .bindTooltip(mark.name + (mark.code ? ` [${mark.code}]` : ''), {
+        permanent: true, direction: 'top', className: 'mark-tooltip',
+        offset: [0, -14]
+      });
+
+    m.on('dragend', () => {
+      calibrationPositions[mark.id] = [m.getLatLng().lat, m.getLatLng().lng];
+    });
+
+    leafletMarkers[mark.id] = m;
+  });
+}
+
+function copyCalibration() {
+  // Build a JS snippet with corrected px() calls
+  const lines = allMarks().filter(mk => !mk.custom).map(mark => {
+    const pos = calibrationPositions[mark.id] || mark.pos || [mark.lat, mark.lng];
+    const px_x = Math.round(pos[1]);          // lng = x
+    const px_y = Math.round(IMG_H - pos[0]);  // lat = IMG_H - y
+    return `  { id:"${mark.id}", pos: px(${px_x}, ${px_y}) },`;
+  });
+  const text = '// Calibrated positions\n' + lines.join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.cal-copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = 'Copy corrected coordinates', 2000);
+  });
+}
+
 // ─── Mode switching ───────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
-  ['explore', 'name-quiz', 'locate-quiz'].forEach(id =>
-    document.getElementById('btn-' + id).classList.toggle('active', id === m));
+  ['explore', 'name-quiz', 'locate-quiz', 'calibrate'].forEach(id =>
+    document.getElementById('btn-' + id)?.classList.toggle('active', id === m));
 
   map.getContainer().classList.remove('quiz-locate');
   map.off('click', handleLocateClick);
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
 
   document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
+  document.getElementById('calibrate-bar').classList.toggle('visible', m === 'calibrate');
   selectedMark = null;
-  placeMarkers();
 
-  if (m === 'explore') {
-    clearSelection();
-  } else if (m === 'name-quiz') {
-    switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'name'; nextQuestion();
-  } else if (m === 'locate-quiz') {
-    switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'locate'; nextQuestion();
+  if (m === 'calibrate') {
+    enterCalibrateMode();
+  } else {
+    placeMarkers();
+    if (m === 'explore') {
+      clearSelection();
+    } else if (m === 'name-quiz') {
+      switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'name'; nextQuestion();
+    } else if (m === 'locate-quiz') {
+      switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'locate'; nextQuestion();
+    }
   }
 }
 
