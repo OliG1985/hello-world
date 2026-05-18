@@ -356,7 +356,7 @@
   <span style="font-size:1.5rem">⛵</span>
   <div class="title-block">
     <h1>Chichester Harbour Race Marks</h1>
-    <p>Learn &amp; quiz yourself on local racing buoys</p>
+    <p>ISC Course Card Alpha 2025–2028 · Harbour &amp; Bay courses</p>
   </div>
   <div class="mode-btns">
     <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
@@ -419,21 +419,566 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ─── Mark data ────────────────────────────────────────────────────────────────
-// Approximate positions of Chichester Harbour racing marks (HISC / ISC / CYC area).
-// Mark names sourced from HISC Chart of Marks & Chichester Harbour Federation.
-// Positions are APPROXIMATE — verify against your club's sailing instructions.
+// ISC Course Card Alpha 2025-2028 — Harbour and Bay Courses.
+// Mark names and codes from the ISC chart. Positions APPROXIMATE.
+// P = leave to Port, S = leave to Starboard. Verify against your club's SIs.
 const MARKS = [
-  // ── Outer harbour / Hayling Bay ──────────────────────────────
+  // ── Emsworth Channel ──────────────────────────────────────────
   {
-    id: "chich_bar",
-    name: "Chichester Bar Beacon",
-    lat: 50.7633, lng: -0.9417,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Entrance mark",
-    rounding: "Leave to port entering harbour",
-    notes: "Red can buoy on the bar at the harbour entrance. Key waypoint for all racing — the start/finish area for HISC harbour races is nearby.",
+    id: "marker_1",
+    code: "1",
+    name: "Marker",
+    lat: 50.843, lng: -0.997,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Northernmost mark in the Emsworth Channel. Upper turning mark for longer harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "channel_2",
+    code: "2",
+    name: "Channel",
+    lat: 50.825, lng: -0.977,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "In the Emsworth Channel, used as a windward or leeward mark in harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "mill_rythe_m",
+    code: "M",
+    name: "Mill Rythe",
+    lat: 50.808, lng: -0.970,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Off Mill Rythe Creek on the western side of Hayling Island. Used in harbour courses taking in the Emsworth Channel.",
+    club: "ISC"
+  },
+  {
+    id: "n_pilsey",
+    code: "",
+    name: "N Pilsey",
+    lat: 50.797, lng: -0.957,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard lateral",
+    rounding: "Leave to starboard",
+    notes: "Green conical lateral buoy, north of Pilsey Island. A key windward mark for harbour courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "nw_pilsey",
+    code: "",
+    name: "NW Pilsey",
+    lat: 50.793, lng: -0.975,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port",
+    notes: "NW of Pilsey Island. Used in courses extending into the upper Thorney/Emsworth area.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "sw_pilsey_3",
+    code: "3",
+    name: "SW Pilsey",
+    lat: 50.775, lng: -0.968,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "SW of Pilsey Island. Turning mark for outer harbour and bay courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "fishery",
+    code: "",
+    name: "Fishery",
+    lat: 50.772, lng: -0.962,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port",
+    notes: "Marks the Fishery area near the Hayling/Pilsey side of the harbour approach.",
+    club: "HISC"
+  },
+  {
+    id: "runway",
+    code: "",
+    name: "Runway",
+    lat: 50.768, lng: -0.955,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "Named after the nearby Hayling Island airfield runway. Used in outer harbour courses.",
+    club: "ISC / HISC"
+  },
+  // ── Thorney Channel ──────────────────────────────────────────
+  {
+    id: "stanbury_5",
+    code: "5",
+    name: "Stanbury",
+    lat: 50.857, lng: -0.907,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Upper Thorney Channel. Northernmost turning mark for courses in this area.",
+    club: "ISC"
+  },
+  {
+    id: "star_6",
+    code: "6",
+    name: "Star",
+    lat: 50.838, lng: -0.898,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Thorney Channel. Used as windward or leeward mark in channel courses.",
+    club: "ISC"
+  },
+  {
+    id: "thorney_7",
+    code: "7",
+    name: "Thorney",
+    lat: 50.820, lng: -0.912,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "In the Thorney Channel opposite Thorney Island. Key turning mark.",
+    club: "ISC"
+  },
+  {
+    id: "lowles_l",
+    code: "L",
+    name: "Lowles",
+    lat: 50.800, lng: -0.920,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Lower Thorney Channel. Used as a gybe or leeward mark.",
+    club: "ISC"
+  },
+  {
+    id: "pivot",
+    code: "",
+    name: "Pivot",
+    lat: 50.792, lng: -0.927,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "At the lower end of the Thorney Channel near the junction with the main channel.",
+    club: "ISC"
+  },
+  {
+    id: "spit_v",
+    code: "V",
+    name: "Spit",
+    lat: 50.795, lng: -0.915,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "Near the Thorney Island spit. Turning mark in Thorney Channel courses.",
+    club: "ISC"
+  },
+  {
+    id: "camber",
+    code: "",
+    name: "Camber",
+    lat: 50.790, lng: -0.900,
+    color: "#FFFF00", badgeClass: "badge-yellow",
+    type: "Cardinal / race mark",
+    rounding: "As per sailing instructions",
+    notes: "Southerly cardinal mark at the junction of the Thorney and Chichester Channels. Key gybe mark.",
+    club: "ISC / CYC"
+  },
+  {
+    id: "astra_a",
+    code: "A",
+    name: "Astra",
+    lat: 50.785, lng: -0.888,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Lower Chichester Channel near the junction. Used as leeward or gybe mark.",
+    club: "ISC"
+  },
+  // ── Chichester Channel ───────────────────────────────────────
+  {
+    id: "stocker",
+    code: "",
+    name: "Stocker",
+    lat: 50.800, lng: -0.885,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port going north",
+    notes: "Red can buoy Fl(3)R.10s on Stocker Sands. Reference mark for ISC and CYC harbour courses.",
+    club: "ISC / CYC"
+  },
+  {
+    id: "goal_posts",
+    code: "",
+    name: "The Goal Posts",
+    lat: 50.797, lng: -0.877,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Gate",
+    rounding: "Pass between them as directed",
+    notes: "Two marks forming a gate in the Chichester Channel off Itchenor. Pass between them.",
+    club: "ISC"
+  },
+  {
+    id: "creek_post",
+    code: "",
+    name: "Creek Post",
+    lat: 50.795, lng: -0.873,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "Off a creek entrance near Itchenor. Close-in turning mark.",
+    club: "ISC"
+  },
+  {
+    id: "itchenor_9",
+    code: "9",
+    name: "Itchenor",
+    lat: 50.797, lng: -0.862,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Off Itchenor Sailing Club. Leeward mark; the club line finish (C) is between here and the committee boat.",
+    club: "ISC"
+  },
+  {
+    id: "club_line_c",
+    code: "C",
+    name: "Club Line Finish",
+    lat: 50.799, lng: -0.858,
+    color: "#FFFFFF", badgeClass: "badge-white",
+    type: "Finish line",
+    rounding: "Cross between committee boat and Itchenor mark",
+    notes: "The standard ISC finish line off the club. Races finishing here cross between the committee boat and the Itchenor mark.",
+    club: "ISC"
+  },
+  {
+    id: "gallon_line_f",
+    code: "F",
+    name: "Gallon Line Post",
+    lat: 50.802, lng: -0.858,
+    color: "#FFFFFF", badgeClass: "badge-white",
+    type: "Finish line",
+    rounding: "Cross between committee boat and gallon line post",
+    notes: "An alternative finish line. The Gallon Line Post is a fixed mark on the Itchenor shore.",
+    club: "ISC"
+  },
+  {
+    id: "rookwood_q",
+    code: "Q",
+    name: "Rookwood",
+    lat: 50.803, lng: -0.857,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Near Rookwood, Chichester Channel. Used in upper harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "park_8",
+    code: "8",
+    name: "Park",
+    lat: 50.812, lng: -0.872,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Chichester Channel mid-section. Used as a windward mark in upper harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "deep_end_d",
+    code: "D",
+    name: "Deep End",
+    lat: 50.818, lng: -0.857,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Upper Chichester Channel. Often the windward mark for courses set from Itchenor.",
+    club: "ISC / CYC"
+  },
+  {
+    id: "fairway",
+    code: "",
+    name: "Fairway",
+    lat: 50.802, lng: -0.850,
+    color: "#FFFFFF", badgeClass: "badge-white",
+    type: "Safe water",
+    rounding: "Pass on either side",
+    notes: "Safe water / fairway mark in the upper Chichester Channel near Itchenor.",
     club: "General"
+  },
+  {
+    id: "cobner_p",
+    code: "P",
+    name: "Cobner",
+    lat: 50.820, lng: -0.843,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Far upper Chichester Channel toward Dell Quay. Used in the longest harbour courses.",
+    club: "ISC / CYC"
+  },
+  // ── Bosham Channel ───────────────────────────────────────────
+  {
+    id: "roman_transit",
+    code: "",
+    name: "Roman Transit",
+    lat: 50.820, lng: -0.862,
+    color: "#FFFF00", badgeClass: "badge-yellow",
+    type: "Transit mark",
+    rounding: "Transit reference only",
+    notes: "A leading/transit mark. Line it up with the shore mark for a precise position line.",
+    club: "ISC"
+  },
+  {
+    id: "chalkdock_t",
+    code: "T",
+    name: "Chalkdock",
+    lat: 50.833, lng: -0.870,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "Upper harbour near the Bosham Channel. Used in the longest ISC harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "wear_s",
+    code: "S / W",
+    name: "Wear",
+    lat: 50.828, lng: -0.860,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Near Bosham in the upper harbour. Used as a turning mark in longer courses.",
+    club: "ISC"
+  },
+  {
+    id: "baker_u",
+    code: "X / Z",
+    name: "Baker",
+    lat: 50.825, lng: -0.848,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "In the Bosham area. Used as a turning mark in the longest upper harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "peacock_y",
+    code: "Y",
+    name: "Peacock",
+    lat: 50.812, lng: -0.857,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Chichester/Bosham channel junction area. Used in ISC harbour courses.",
+    club: "ISC"
+  },
+  // ── Outer harbour ────────────────────────────────────────────
+  {
+    id: "johns_folly_i",
+    code: "I",
+    name: "John's Folly",
+    lat: 50.773, lng: -0.943,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Near the harbour entrance on the Hayling side. A classic outer harbour mark.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "gardner_g",
+    code: "G",
+    name: "Gardner",
+    lat: 50.763, lng: -0.953,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "In the outer harbour approaches. Used as a turning mark for bay and outer harbour courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "east_head_e",
+    code: "E / H",
+    name: "East Head",
+    lat: 50.770, lng: -0.913,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "The sandy spit on the Chichester (eastern) side of the harbour entrance. A classic reaching mark.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "ellanore_4",
+    code: "4",
+    name: "Ellanore",
+    lat: 50.767, lng: -0.920,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Outer harbour, Hayling Bay approaches. Key mark for bay and outer harbour courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "snowhill",
+    code: "",
+    name: "Snowhill",
+    lat: 50.765, lng: -0.910,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "Near Snowhill Creek on the Chichester side. Used in outer harbour courses.",
+    club: "ISC"
+  },
+  {
+    id: "john_davis",
+    code: "",
+    name: "John Davis",
+    lat: 50.758, lng: -0.933,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "As per sailing instructions",
+    notes: "In the outer harbour / bar area. A turning mark for bay courses.",
+    club: "ISC / HISC"
+  },
+  // ── Hayling Bay ──────────────────────────────────────────────
+  {
+    id: "freddie_brooks_b",
+    code: "B",
+    name: "Freddie Brooks",
+    lat: 50.758, lng: -0.963,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Off Hayling Island in the outer harbour / bay. A windward or reaching mark for bay courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "nw_winner",
+    code: "",
+    name: "NW Winner",
+    lat: 50.755, lng: -0.952,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral / race mark",
+    rounding: "Leave to port",
+    notes: "NW extremity of the Winner Bank. Used as windward or gybe mark in bay courses.",
+    club: "HISC"
+  },
+  {
+    id: "north_winner",
+    code: "",
+    name: "North Winner",
+    lat: 50.760, lng: -0.947,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral",
+    rounding: "Leave to port",
+    notes: "Northern side of the Winner Bank.",
+    club: "HISC"
+  },
+  {
+    id: "mid_winner",
+    code: "",
+    name: "Mid Winner",
+    lat: 50.747, lng: -0.950,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port lateral / race mark",
+    rounding: "Leave to port",
+    notes: "Mid-point of the Winner Bank. Gybe mark in bay windward-leeward courses.",
+    club: "HISC"
+  },
+  {
+    id: "sandhead_n",
+    code: "N",
+    name: "Sandhead",
+    lat: 50.748, lng: -0.927,
+    color: "#FF9900", badgeClass: "badge-orange",
+    type: "Race mark",
+    rounding: "Pass to the north — do not cross inside",
+    notes: "Marks the Sandhead shoal area south of East Head. Course N means pass north of Sandhead and Copynold.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "dunes_o",
+    code: "O",
+    name: "Dunes",
+    lat: 50.742, lng: -0.933,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "Off the dunes on the Hayling Island south shore. Leeward mark for bay courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "calvert_k",
+    code: "J / K",
+    name: "Calvert",
+    lat: 50.733, lng: -0.937,
+    color: "#00BB44", badgeClass: "badge-green",
+    type: "Starboard (S)",
+    rounding: "Leave to starboard",
+    notes: "South of the Winner Bank in Hayling Bay. Used in the longest bay courses.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "treloar_r",
+    code: "R",
+    name: "Treloar",
+    lat: 50.733, lng: -0.952,
+    color: "#FF3300", badgeClass: "badge-red",
+    type: "Port (P)",
+    rounding: "Leave to port",
+    notes: "Southern Hayling Bay. Outer limit mark for the longest bay courses.",
+    club: "ISC / HISC"
+  },
+  // ── Inflatable / Zone marks ──────────────────────────────────
+  {
+    id: "beach_zone",
+    code: "★",
+    name: "Beach",
+    lat: 50.737, lng: -0.943,
+    color: "#FFDD00", badgeClass: "badge-yellow",
+    type: "Zone mark (inflatable)",
+    rounding: "As per sailing instructions",
+    notes: "Inflatable zone mark off Hayling Island beach. Exact position set on the day by the race officer.",
+    club: "ISC / HISC"
+  },
+  {
+    id: "tern_zone",
+    code: "★",
+    name: "Tern",
+    lat: 50.763, lng: -0.930,
+    color: "#FFDD00", badgeClass: "badge-yellow",
+    type: "Zone mark (inflatable)",
+    rounding: "As per sailing instructions",
+    notes: "Inflatable zone mark in the outer harbour. Exact position set on the day.",
+    club: "ISC"
+  },
+  {
+    id: "walrus_zone",
+    code: "★",
+    name: "Walrus",
+    lat: 50.778, lng: -0.903,
+    color: "#FFDD00", badgeClass: "badge-yellow",
+    type: "Zone mark (inflatable)",
+    rounding: "As per sailing instructions",
+    notes: "Inflatable zone mark near the harbour entrance. Exact position set on the day.",
+    club: "ISC"
+  },
+  {
+    id: "bay_zone",
+    code: "★",
+    name: "Bay",
+    lat: 50.745, lng: -0.920,
+    color: "#FFDD00", badgeClass: "badge-yellow",
+    type: "Zone mark (inflatable)",
+    rounding: "As per sailing instructions",
+    notes: "Inflatable zone mark for bay courses. Exact position set on the day by the race officer.",
+    club: "ISC / HISC"
   },
   {
     id: "nw_winner",
@@ -457,154 +1002,6 @@ const MARKS = [
     notes: "On the Winner Bank southeast of the entrance. Used as a leeward or gybe mark. The bank dries at low water — stay clear of it.",
     club: "HISC"
   },
-  {
-    id: "east_head",
-    name: "East Head",
-    lat: 50.7717, lng: -0.8983,
-    color: "#FFFF00",
-    badgeClass: "badge-yellow",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "The sandy spit on the eastern (Chichester) side of the harbour entrance. Used as a reaching or turning mark in outer-harbour courses.",
-    club: "General"
-  },
-  // ── Pilsey Island group (Thorney/Emsworth Channel area) ───────
-  {
-    id: "sw_pilsey",
-    name: "SW Pilsey",
-    lat: 50.7817, lng: -0.9633,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "SW of Pilsey Island. Used as a turning mark for courses in the Thorney Channel approaches.",
-    club: "HISC / General"
-  },
-  {
-    id: "pilsey_sands",
-    name: "Pilsey Sands",
-    lat: 50.7767, lng: -0.9683,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port",
-    notes: "Marks the Pilsey Sands shoal on the western side of the harbour approaches. Avoid at low water.",
-    club: "General"
-  },
-  {
-    id: "n_pilsey",
-    name: "N Pilsey",
-    lat: 50.7950, lng: -0.9567,
-    color: "#00BB44",
-    badgeClass: "badge-green",
-    type: "Starboard lateral / race mark",
-    rounding: "Leave to starboard",
-    notes: "Green conical buoy north of Pilsey Island in the Emsworth Channel. A key windward mark for harbour courses sailed from HISC.",
-    club: "HISC"
-  },
-  {
-    id: "nw_pilsey",
-    name: "NW Pilsey",
-    lat: 50.7983, lng: -0.9717,
-    color: "#FF9900",
-    badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "NW of Pilsey Island. Used in longer courses that take in the upper Thorney/Emsworth Channel area.",
-    club: "HISC / General"
-  },
-  // ── Mill Rythe / Hayling west coast ──────────────────────────
-  {
-    id: "mill_rythe",
-    name: "Mill Rythe",
-    lat: 50.8017, lng: -0.9650,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "Off the entrance to Mill Rythe Creek on the west coast of Hayling Island. A common turning mark in upper-harbour courses.",
-    club: "HISC"
-  },
-  {
-    id: "e_mill_rythe",
-    name: "East Mill Rythe",
-    lat: 50.8017, lng: -0.9483,
-    color: "#00BB44",
-    badgeClass: "badge-green",
-    type: "Starboard lateral / race mark",
-    rounding: "Leave to starboard",
-    notes: "On the eastern side of the Mill Rythe approach. Often paired with Mill Rythe to form a gate.",
-    club: "HISC"
-  },
-  // ── Main Chichester Channel ───────────────────────────────────
-  {
-    id: "channel",
-    name: "Channel",
-    lat: 50.7783, lng: -0.9217,
-    color: "#FFFF00",
-    badgeClass: "badge-yellow",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "In the main Chichester Channel. Used as a turning mark for courses that mix inner and outer harbour legs.",
-    club: "ISC / CYC"
-  },
-  {
-    id: "camber",
-    name: "Camber",
-    lat: 50.7950, lng: -0.8917,
-    color: "#FFFF00",
-    badgeClass: "badge-yellow",
-    type: "Cardinal / race mark",
-    rounding: "As per sailing instructions",
-    notes: "Marks the junction where the Thorney Channel diverges from the main Chichester Channel. A southerly cardinal mark. Key turning mark for ISC courses.",
-    club: "ISC / CYC"
-  },
-  {
-    id: "stocker",
-    name: "Stocker",
-    lat: 50.8167, lng: -0.8867,
-    color: "#FF3300",
-    badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port going north",
-    notes: "Red can buoy, Fl(3)R.10s. Marks Stocker Sands in the upper Chichester Channel. Reference mark for ISC and CYC courses in the upper harbour.",
-    club: "ISC / CYC"
-  },
-  // ── Upper harbour (Bosham / Emsworth area) ────────────────────
-  {
-    id: "freddie",
-    name: "Freddie",
-    lat: 50.8183, lng: -0.9350,
-    color: "#FF9900",
-    badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "An inflatable racing mark used in the Emsworth Channel area. Position varies — check your club's current sailing instructions.",
-    club: "General"
-  },
-  {
-    id: "brooks",
-    name: "Brooks",
-    lat: 50.8317, lng: -0.9100,
-    color: "#FF9900",
-    badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "An inflatable racing mark in the upper harbour. Position varies — check your club's current sailing instructions.",
-    club: "General"
-  },
-  // ── HISC start area ───────────────────────────────────────────
-  {
-    id: "hisc_start",
-    name: "HISC Start / Finish",
-    lat: 50.7733, lng: -0.9617,
-    color: "#FF9900",
-    badgeClass: "badge-orange",
-    type: "Start / Finish",
-    rounding: "Cross between committee boat and pin end",
-    notes: "Approximate start/finish area off HISC. The actual line is set on the day between the committee boat and an orange inflatable pin buoy.",
-    club: "HISC"
-  }
 ];
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -619,7 +1016,7 @@ let quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
 
 // ─── Map ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', {
-  center: [50.800, -0.930],
+  center: [50.790, -0.915],
   zoom: 12
 });
 
@@ -709,10 +1106,11 @@ function renderExplorePanel() {
 
   let html = '<p class="hint-text" style="margin-bottom:12px">Click a buoy on the map or a mark below</p>';
   marks.forEach(mark => {
+    const codeTag = mark.code ? `<span style="font-size:0.68rem;color:#f39c12;font-weight:700;margin-left:4px">[${mark.code}]</span>` : '';
     html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
       <div class="mark-dot" style="background:${mark.color}"></div>
       <div>
-        <div class="mark-list-name">${mark.name}</div>
+        <div class="mark-list-name">${mark.name}${codeTag}</div>
         <div class="mark-list-type">${mark.type} · ${mark.club || 'Custom'}</div>
       </div>
     </div>`;
@@ -735,12 +1133,13 @@ function selectMark(mark) {
   const latStr = mark.lat.toFixed(4) + '°N';
   const lngStr = Math.abs(mark.lng).toFixed(4) + '°W';
   const dms = toDMS(mark.lat, mark.lng);
+  const codeHtml = mark.code ? `<span style="display:inline-block;font-size:1rem;font-weight:900;color:#f39c12;background:#2a1f00;border:1px solid #6a4f00;border-radius:6px;padding:2px 10px;margin-left:8px;letter-spacing:0.05em">${mark.code}</span>` : '';
 
   pb.innerHTML = `
     <div style="margin-bottom:10px">
       <button onclick="renderExplorePanel()" style="background:none;border:none;color:#5d8ab5;cursor:pointer;font-size:0.78rem">← All marks</button>
     </div>
-    <div class="mark-name">${mark.name}</div>
+    <div class="mark-name">${mark.name}${codeHtml}</div>
     <span class="mark-badge ${mark.badgeClass || 'badge-yellow'}">${mark.type}</span>
 
     <div class="detail-row">
@@ -862,7 +1261,7 @@ function nextLocateQuestion() {
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
 
   // Zoom out so user has to find it
-  map.setView([50.800, -0.930], 12);
+  map.setView([50.790, -0.915], 12);
 
   // Hide tooltips so mark name isn't visible
   Object.values(leafletMarkers).forEach(m => m.closeTooltip());
