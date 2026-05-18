@@ -21,136 +21,149 @@
     header {
       background: #0d2044;
       border-bottom: 2px solid #1e4080;
-      padding: 10px 20px;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex-shrink: 0;
       flex-wrap: wrap;
     }
 
-    header .title-block h1 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #7eb8f7;
-    }
+    header h1 { font-size: 1rem; font-weight: 700; color: #7eb8f7; }
+    header p  { font-size: 0.72rem; color: #8ea8cc; }
 
-    header .title-block p {
-      font-size: 0.75rem;
-      color: #8ea8cc;
-    }
-
-    .mode-btns {
-      display: flex;
-      gap: 6px;
-      margin-left: auto;
-    }
+    .mode-btns { display: flex; gap: 5px; margin-left: auto; }
 
     .mode-btn {
-      padding: 6px 14px;
+      padding: 5px 11px;
       border-radius: 20px;
       border: 1px solid #1e4080;
       background: transparent;
       color: #8ea8cc;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
     }
 
-    .mode-btn.active {
-      background: #1a5296;
-      color: #e8f0fe;
-      border-color: #3a72be;
-    }
+    .mode-btn.active { background: #1a5296; color: #e8f0fe; border-color: #3a72be; }
 
-    .layout {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-    }
+    .layout { display: flex; flex: 1; overflow: hidden; }
 
     #map {
       flex: 1;
+      background: #b8cfe0;
       cursor: default;
-      background: #d4e8f0;
     }
-
     #map.quiz-locate { cursor: crosshair; }
 
-    /* Side panel */
+    /* ── Panel ── */
     #panel {
-      width: 300px;
+      width: 240px;
       flex-shrink: 0;
       background: #0d2044;
       border-left: 2px solid #1e4080;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: width 0.2s ease;
     }
+
+    #panel.collapsed { width: 32px; }
+    #panel.collapsed .panel-inner { display: none; }
+
+    #panel-toggle {
+      flex-shrink: 0;
+      background: #0d2044;
+      border: none;
+      border-bottom: 1px solid #1e4080;
+      color: #5d8ab5;
+      font-size: 1rem;
+      padding: 6px 0;
+      cursor: pointer;
+      text-align: center;
+      width: 100%;
+    }
+
+    #panel-toggle:hover { color: #7eb8f7; }
+
+    .panel-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 2px solid #1e4080;
+      flex-shrink: 0;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #8ea8cc;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+
+    .panel-tab.active { color: #7eb8f7; border-bottom-color: #7eb8f7; }
 
     .panel-body {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 12px;
     }
 
-    .panel-body::-webkit-scrollbar { width: 5px; }
-    .panel-body::-webkit-scrollbar-track { background: #0d2044; }
-    .panel-body::-webkit-scrollbar-thumb { background: #1e4080; border-radius: 3px; }
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-thumb { background: #1e4080; border-radius: 2px; }
 
-    /* Mark card */
-    .mark-card { display: none; }
-    .mark-card.visible { display: block; }
-
+    /* Mark detail */
     .mark-name {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: #7eb8f7;
       margin-bottom: 4px;
+      line-height: 1.3;
     }
 
     .mark-badge {
       display: inline-block;
-      font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 12px;
-      margin-bottom: 12px;
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-bottom: 10px;
     }
 
     .badge-red    { background: #5c1010; color: #ff8a8a; }
     .badge-yellow { background: #4a3a00; color: #ffe07a; }
     .badge-orange { background: #4a2500; color: #ffb07a; }
     .badge-green  { background: #0a3a18; color: #7affa8; }
-    .badge-black  { background: #222; color: #aaa; }
     .badge-white  { background: #2a3550; color: #dde; }
 
     .detail-row {
       display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-      font-size: 0.82rem;
+      gap: 5px;
+      margin-bottom: 7px;
+      font-size: 0.78rem;
     }
 
-    .detail-label {
-      color: #5d8ab5;
-      min-width: 80px;
-      flex-shrink: 0;
-    }
-
+    .detail-label { color: #5d8ab5; min-width: 68px; flex-shrink: 0; }
     .detail-value { color: #c8daf0; line-height: 1.4; }
-
-    .coords {
-      font-size: 0.75rem;
-      color: #4a6a90;
-      margin-top: 12px;
-      font-family: monospace;
-    }
 
     .hint-text {
       color: #5d8ab5;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       text-align: center;
-      padding: 20px 10px;
+      padding: 16px 6px;
       line-height: 1.6;
     }
 
@@ -158,109 +171,76 @@
     .mark-list-item {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 6px;
-      border-radius: 6px;
+      gap: 8px;
+      padding: 6px 4px;
+      border-radius: 5px;
       cursor: pointer;
-      transition: background 0.15s;
       border-bottom: 1px solid #132d55;
+      transition: background 0.12s;
     }
-
     .mark-list-item:hover { background: #132d55; }
 
     .mark-dot {
-      width: 14px;
-      height: 14px;
+      width: 11px; height: 11px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 1.5px solid rgba(255,255,255,0.3);
       flex-shrink: 0;
     }
 
-    .mark-list-name {
-      font-size: 0.82rem;
-      color: #c8daf0;
-    }
-
-    .mark-list-type {
-      font-size: 0.7rem;
-      color: #5d8ab5;
-    }
+    .mark-list-name { font-size: 0.78rem; color: #c8daf0; }
+    .mark-list-type { font-size: 0.66rem; color: #5d8ab5; }
 
     /* Quiz */
     .quiz-panel { text-align: center; }
-
-    .quiz-status {
-      font-size: 0.8rem;
-      color: #8ea8cc;
-      margin-bottom: 14px;
-    }
-
-    .quiz-prompt {
-      font-size: 0.9rem;
-      color: #e8f0fe;
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .quiz-target {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #7eb8f7;
-      margin-bottom: 8px;
-    }
+    .quiz-status { font-size: 0.78rem; color: #8ea8cc; margin-bottom: 12px; }
+    .quiz-prompt { font-size: 0.85rem; color: #e8f0fe; margin-bottom: 10px; line-height: 1.4; }
+    .quiz-target { font-size: 1rem; font-weight: 700; color: #7eb8f7; margin-bottom: 6px; }
 
     .quiz-feedback {
       min-height: 2em;
-      font-size: 0.85rem;
-      margin-bottom: 12px;
-      line-height: 1.5;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+      line-height: 1.4;
     }
-
     .feedback-correct { color: #2ecc71; }
     .feedback-wrong   { color: #e74c3c; }
     .feedback-hint    { color: #f39c12; }
 
-    .quiz-options {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
+    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
 
     .qbtn {
       width: 100%;
-      padding: 9px 12px;
+      padding: 8px 10px;
       background: #132d55;
       border: 1px solid #1e4080;
-      border-radius: 8px;
+      border-radius: 7px;
       color: #c8daf0;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       cursor: pointer;
       text-align: left;
-      transition: background 0.15s;
+      transition: background 0.12s;
     }
-
     .qbtn:hover:not(:disabled) { background: #1a3a6e; }
     .qbtn.correct { background: #0d3a1e; border-color: #2ecc71; color: #2ecc71; }
     .qbtn.wrong   { background: #3a0d0d; border-color: #e74c3c; color: #e74c3c; }
 
     .next-btn {
-      margin-top: 14px;
-      padding: 9px 22px;
+      margin-top: 12px;
+      padding: 8px 18px;
       background: #1a5296;
       border: none;
-      border-radius: 8px;
+      border-radius: 7px;
       color: #e8f0fe;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
       display: none;
     }
-
     .next-btn.visible { display: inline-block; }
 
-    /* Add mark */
+    /* Add mark bar */
     .add-mark-bar {
-      padding: 10px 14px;
+      padding: 8px 10px;
       background: #0a1e3a;
       border-top: 1px solid #1e4080;
       flex-shrink: 0;
@@ -268,84 +248,67 @@
 
     .add-mark-btn {
       width: 100%;
-      padding: 8px;
+      padding: 7px;
       background: transparent;
       border: 1px dashed #1e4080;
-      border-radius: 6px;
+      border-radius: 5px;
       color: #5d8ab5;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
     }
+    .add-mark-btn:hover, .add-mark-btn.active { border-color: #3a72be; color: #7eb8f7; }
 
-    .add-mark-btn:hover, .add-mark-btn.active {
-      border-color: #3a72be;
-      color: #7eb8f7;
-    }
-
-    .add-mark-form {
-      display: none;
-      padding-top: 8px;
-    }
-
+    .add-mark-form { display: none; padding-top: 7px; }
     .add-mark-form.visible { display: block; }
 
     .add-mark-form input, .add-mark-form select, .add-mark-form textarea {
       width: 100%;
-      margin-bottom: 6px;
-      padding: 6px 8px;
+      margin-bottom: 5px;
+      padding: 5px 7px;
       background: #0d2044;
       border: 1px solid #1e4080;
       border-radius: 4px;
       color: #e8f0fe;
-      font-size: 0.78rem;
+      font-size: 0.74rem;
     }
 
     .add-mark-form label {
       display: block;
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: #5d8ab5;
       margin-bottom: 2px;
     }
 
-    .form-row { display: flex; gap: 6px; }
+    .form-row { display: flex; gap: 5px; }
     .form-row > * { flex: 1; }
 
     .save-btn {
       width: 100%;
-      padding: 7px;
+      padding: 6px;
       background: #1a5296;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       color: #e8f0fe;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
     }
 
-    /* Leaflet tooltip override */
+    /* Leaflet overrides */
     .mark-tooltip {
       background: #0d2044 !important;
       border: 1px solid #1e4080 !important;
       color: #7eb8f7 !important;
-      font-size: 0.78rem !important;
-      padding: 4px 8px !important;
+      font-size: 0.74rem !important;
+      padding: 3px 7px !important;
       box-shadow: none !important;
     }
-
     .mark-tooltip::before { border-top-color: #1e4080 !important; }
 
-    /* Quiz locate ring */
-    .quiz-ring {
-      border: 3px solid #f39c12;
-      border-radius: 50%;
-      pointer-events: none;
-    }
-
     .disclaimer {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       color: #3a5a80;
       text-align: center;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-top: 1px solid #132d55;
       flex-shrink: 0;
     }
@@ -354,15 +317,15 @@
 <body>
 
 <header>
-  <span style="font-size:1.5rem">⛵</span>
-  <div class="title-block">
+  <span style="font-size:1.3rem">⛵</span>
+  <div>
     <h1>Chichester Harbour Race Marks</h1>
-    <p>ISC Course Card Alpha 2025–2028 · Harbour &amp; Bay courses</p>
+    <p>ISC Course Card Alpha 2025–2028</p>
   </div>
   <div class="mode-btns">
-    <button class="mode-btn active" id="btn-explore" onclick="setMode('explore')">Explore</button>
-    <button class="mode-btn" id="btn-name-quiz" onclick="setMode('name-quiz')">Name Quiz</button>
-    <button class="mode-btn" id="btn-locate-quiz" onclick="setMode('locate-quiz')">Locate Quiz</button>
+    <button class="mode-btn active" id="btn-explore"      onclick="setMode('explore')">Explore</button>
+    <button class="mode-btn"        id="btn-name-quiz"    onclick="setMode('name-quiz')">Name Quiz</button>
+    <button class="mode-btn"        id="btn-locate-quiz"  onclick="setMode('locate-quiz')">Locate Quiz</button>
   </div>
 </header>
 
@@ -370,934 +333,646 @@
   <div id="map"></div>
 
   <div id="panel">
-    <div class="panel-body" id="panel-body">
-      <!-- content injected by JS -->
-    </div>
+    <button id="panel-toggle" onclick="togglePanel()" title="Collapse/expand panel">◀</button>
 
-    <div class="add-mark-bar" id="add-mark-bar">
-      <button class="add-mark-btn" id="add-toggle" onclick="toggleAddMode()">+ Add a custom mark</button>
-      <div class="add-mark-form" id="add-form">
-        <p style="font-size:0.72rem;color:#5d8ab5;margin-bottom:6px;">Click the map to set position, then fill in details.</p>
-        <label>Name</label>
-        <input type="text" id="new-name" placeholder="e.g. Winner Buoy" />
-        <div class="form-row">
-          <div>
-            <label>Colour</label>
-            <select id="new-color">
-              <option value="#FF3300">Red</option>
-              <option value="#FF9900">Orange</option>
-              <option value="#FFFF00">Yellow</option>
-              <option value="#00BB44">Green</option>
-              <option value="#222222">Black</option>
-              <option value="#FFFFFF">White</option>
-              <option value="#FF6600">Orange/Red</option>
-            </select>
-          </div>
-          <div>
-            <label>Type</label>
-            <select id="new-type">
-              <option>Port rounding</option>
-              <option>Starboard rounding</option>
-              <option>Start mark</option>
-              <option>Finish mark</option>
-              <option>Gate mark</option>
-              <option>Channel mark</option>
-              <option>Danger mark</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-        <label>Notes (optional)</label>
-        <textarea id="new-notes" rows="2" placeholder="Rounding instructions, tips..."></textarea>
-        <button class="save-btn" onclick="saveCustomMark()">Save Mark</button>
+    <div class="panel-inner">
+      <div class="panel-tabs">
+        <button class="panel-tab active" data-tab="info">Info</button>
+        <button class="panel-tab"        data-tab="list">Marks</button>
+        <button class="panel-tab"        data-tab="quiz">Quiz</button>
       </div>
-    </div>
 
-    <div class="disclaimer">Positions approximate — for learning only, not for navigation</div>
+      <div class="panel-body" id="tab-info">
+        <p class="hint-text">Click any mark on the chart to see details.</p>
+      </div>
+      <div class="panel-body" id="tab-list"  style="display:none"></div>
+      <div class="panel-body" id="tab-quiz"  style="display:none">
+        <div class="quiz-panel">
+          <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
+          <div class="quiz-prompt"  id="quiz-question"></div>
+          <div class="quiz-target"  id="quiz-target"  style="display:none"></div>
+          <div class="quiz-options" id="quiz-options"></div>
+          <div class="quiz-feedback"id="quiz-feedback"></div>
+          <button class="next-btn"  id="quiz-next" onclick="nextQuestion()">Next →</button>
+        </div>
+      </div>
+
+      <div class="add-mark-bar" id="add-mark-bar">
+        <button class="add-mark-btn" id="add-toggle" onclick="toggleAddMode()">+ Add a custom mark</button>
+        <div class="add-mark-form" id="add-form">
+          <p style="font-size:0.7rem;color:#5d8ab5;margin-bottom:5px">Click the chart to place, then fill details.</p>
+          <label>Name</label>
+          <input type="text" id="new-name" placeholder="e.g. Start Pin" />
+          <div class="form-row">
+            <div>
+              <label>Colour</label>
+              <select id="new-color">
+                <option value="#FF3300">Red</option>
+                <option value="#FFFF00">Yellow</option>
+                <option value="#00BB44">Green</option>
+                <option value="#FF9900">Orange</option>
+                <option value="#FFFFFF">White</option>
+              </select>
+            </div>
+            <div>
+              <label>Type</label>
+              <select id="new-type">
+                <option>Port (P)</option>
+                <option>Starboard (S)</option>
+                <option>Start / Finish</option>
+                <option>Gate</option>
+                <option>Zone mark</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <label>Notes</label>
+          <textarea id="new-notes" rows="2" placeholder="Rounding, tips..."></textarea>
+          <button class="save-btn" onclick="saveCustomMark()">Save Mark</button>
+        </div>
+      </div>
+
+      <div class="disclaimer">Positions approximate — not for navigation</div>
+    </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+// ─── Image dimensions (isc-chart.png is 2534 × 1792 px) ──────────────────────
+const IMG_W = 2534, IMG_H = 1792;
+// In Leaflet CRS.Simple, [lat, lng] = [y-from-bottom, x-from-left].
+// A pixel at (px, py) from image top-left maps to: [IMG_H - py, px]
+function px(x, y) { return [IMG_H - y, x]; }
+
 // ─── Mark data ────────────────────────────────────────────────────────────────
-// ISC Course Card Alpha 2025-2028 — Harbour and Bay Courses.
-// Mark names and codes from the ISC chart. Positions APPROXIMATE.
-// P = leave to Port, S = leave to Starboard. Verify against your club's SIs.
+// Positions estimated from pixel locations on the ISC Course Card Alpha image.
+// P = leave to Port  S = leave to Starboard
 const MARKS = [
   // ── Emsworth Channel ──────────────────────────────────────────
-  {
-    id: "marker_1",
-    code: "1",
-    name: "Marker",
-    lat: 50.843, lng: -0.997,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Northernmost mark in the Emsworth Channel. Upper turning mark for longer harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "channel_2",
-    code: "2",
-    name: "Channel",
-    lat: 50.825, lng: -0.977,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "In the Emsworth Channel, used as a windward or leeward mark in harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "mill_rythe_m",
-    code: "M",
-    name: "Mill Rythe",
-    lat: 50.808, lng: -0.970,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Off Mill Rythe Creek on the western side of Hayling Island. Used in harbour courses taking in the Emsworth Channel.",
-    club: "ISC"
-  },
-  {
-    id: "n_pilsey",
-    code: "",
-    name: "N Pilsey",
-    lat: 50.797, lng: -0.957,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard lateral",
-    rounding: "Leave to starboard",
-    notes: "Green conical lateral buoy, north of Pilsey Island. A key windward mark for harbour courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "nw_pilsey",
-    code: "",
-    name: "NW Pilsey",
-    lat: 50.793, lng: -0.975,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port",
-    notes: "NW of Pilsey Island. Used in courses extending into the upper Thorney/Emsworth area.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "sw_pilsey_3",
-    code: "3",
-    name: "SW Pilsey",
-    lat: 50.775, lng: -0.968,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "SW of Pilsey Island. Turning mark for outer harbour and bay courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "fishery",
-    code: "",
-    name: "Fishery",
-    lat: 50.772, lng: -0.962,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port",
-    notes: "Marks the Fishery area near the Hayling/Pilsey side of the harbour approach.",
-    club: "HISC"
-  },
-  {
-    id: "runway",
-    code: "",
-    name: "Runway",
-    lat: 50.768, lng: -0.955,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "Named after the nearby Hayling Island airfield runway. Used in outer harbour courses.",
-    club: "ISC / HISC"
-  },
+  { id:"marker_1",      code:"1",    name:"Marker",
+    pos: px(175, 350),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Northernmost mark in the Emsworth Channel.", club:"ISC" },
+
+  { id:"channel_2",     code:"2",    name:"Channel",
+    pos: px(370, 510),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"In the Emsworth Channel. Key windward/leeward mark.", club:"ISC" },
+
+  { id:"mill_rythe_m",  code:"M",    name:"Mill Rythe",
+    pos: px(415, 700),  color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Off Mill Rythe Creek, west coast of Hayling Island.", club:"ISC" },
+
+  { id:"n_pilsey",      code:"",     name:"N Pilsey",
+    pos: px(555, 820),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard lateral", rounding:"Leave to starboard",
+    notes:"Green conical buoy north of Pilsey Island. Key windward mark.", club:"ISC / HISC" },
+
+  { id:"nw_pilsey",     code:"",     name:"NW Pilsey",
+    pos: px(400, 790),  color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"Leave to port",
+    notes:"NW of Pilsey Island. Used in longer harbour courses.", club:"ISC / HISC" },
+
+  { id:"sw_pilsey_3",   code:"3",    name:"SW Pilsey",
+    pos: px(454, 980),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"SW of Pilsey Island. Turning mark for outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"fishery",       code:"",     name:"Fishery",
+    pos: px(474, 960),  color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"Leave to port",
+    notes:"Fishery area on the Hayling/Pilsey approaches.", club:"HISC" },
+
+  { id:"runway",        code:"",     name:"Runway",
+    pos: px(530, 965),  color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Named after Hayling Island airfield. Used in outer harbour courses.", club:"ISC / HISC" },
+
   // ── Thorney Channel ──────────────────────────────────────────
-  {
-    id: "stanbury_5",
-    code: "5",
-    name: "Stanbury",
-    lat: 50.857, lng: -0.907,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Upper Thorney Channel. Northernmost turning mark for courses in this area.",
-    club: "ISC"
-  },
-  {
-    id: "star_6",
-    code: "6",
-    name: "Star",
-    lat: 50.838, lng: -0.898,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Thorney Channel. Used as windward or leeward mark in channel courses.",
-    club: "ISC"
-  },
-  {
-    id: "thorney_7",
-    code: "7",
-    name: "Thorney",
-    lat: 50.820, lng: -0.912,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "In the Thorney Channel opposite Thorney Island. Key turning mark.",
-    club: "ISC"
-  },
-  {
-    id: "lowles_l",
-    code: "L",
-    name: "Lowles",
-    lat: 50.800, lng: -0.920,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Lower Thorney Channel. Used as a gybe or leeward mark.",
-    club: "ISC"
-  },
-  {
-    id: "pivot",
-    code: "",
-    name: "Pivot",
-    lat: 50.792, lng: -0.927,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "At the lower end of the Thorney Channel near the junction with the main channel.",
-    club: "ISC"
-  },
-  {
-    id: "spit_v",
-    code: "V",
-    name: "Spit",
-    lat: 50.795, lng: -0.915,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "Near the Thorney Island spit. Turning mark in Thorney Channel courses.",
-    club: "ISC"
-  },
-  {
-    id: "camber",
-    code: "",
-    name: "Camber",
-    lat: 50.790, lng: -0.900,
-    color: "#FFFF00", badgeClass: "badge-yellow",
-    type: "Cardinal / race mark",
-    rounding: "As per sailing instructions",
-    notes: "Southerly cardinal mark at the junction of the Thorney and Chichester Channels. Key gybe mark.",
-    club: "ISC / CYC"
-  },
-  {
-    id: "astra_a",
-    code: "A",
-    name: "Astra",
-    lat: 50.785, lng: -0.888,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Lower Chichester Channel near the junction. Used as leeward or gybe mark.",
-    club: "ISC"
-  },
+  { id:"stanbury_5",    code:"5",    name:"Stanbury",
+    pos: px(1020, 195), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Upper Thorney Channel. Northernmost turning mark.", club:"ISC" },
+
+  { id:"star_6",        code:"6",    name:"Star",
+    pos: px(1060, 385), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Thorney Channel. Used as windward or leeward mark.", club:"ISC" },
+
+  { id:"thorney_7",     code:"7",    name:"Thorney",
+    pos: px(975, 600),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"In the Thorney Channel opposite Thorney Island.", club:"ISC" },
+
+  { id:"lowles_l",      code:"L",    name:"Lowles",
+    pos: px(940, 800),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Lower Thorney Channel. Gybe or leeward mark.", club:"ISC" },
+
+  { id:"spit_v",        code:"V",    name:"Spit",
+    pos: px(1010, 820), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Near the Thorney Island spit. Turning mark in channel courses.", club:"ISC" },
+
+  { id:"pivot",         code:"",     name:"Pivot",
+    pos: px(810, 840),  color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Lower Thorney Channel near the junction with the main channel.", club:"ISC" },
+
+  { id:"camber",        code:"",     name:"Camber",
+    pos: px(1040, 845), color:"#FFFF00", badgeClass:"badge-yellow",
+    type:"Cardinal / race mark", rounding:"As per sailing instructions",
+    notes:"Southerly cardinal mark at the Thorney/Chichester Channel junction.", club:"ISC / CYC" },
+
+  { id:"astra_a",       code:"A",    name:"Astra",
+    pos: px(1095, 920), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Lower Chichester Channel near the junction. Leeward or gybe mark.", club:"ISC" },
+
   // ── Chichester Channel ───────────────────────────────────────
-  {
-    id: "stocker",
-    code: "",
-    name: "Stocker",
-    lat: 50.800, lng: -0.885,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port going north",
-    notes: "Red can buoy Fl(3)R.10s on Stocker Sands. Reference mark for ISC and CYC harbour courses.",
-    club: "ISC / CYC"
-  },
-  {
-    id: "goal_posts",
-    code: "",
-    name: "The Goal Posts",
-    lat: 50.797, lng: -0.877,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Gate",
-    rounding: "Pass between them as directed",
-    notes: "Two marks forming a gate in the Chichester Channel off Itchenor. Pass between them.",
-    club: "ISC"
-  },
-  {
-    id: "creek_post",
-    code: "",
-    name: "Creek Post",
-    lat: 50.795, lng: -0.873,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "Off a creek entrance near Itchenor. Close-in turning mark.",
-    club: "ISC"
-  },
-  {
-    id: "itchenor_9",
-    code: "9",
-    name: "Itchenor",
-    lat: 50.797, lng: -0.862,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Off Itchenor Sailing Club. Leeward mark; the club line finish (C) is between here and the committee boat.",
-    club: "ISC"
-  },
-  {
-    id: "club_line_c",
-    code: "C",
-    name: "Club Line Finish",
-    lat: 50.799, lng: -0.858,
-    color: "#FFFFFF", badgeClass: "badge-white",
-    type: "Finish line",
-    rounding: "Cross between committee boat and Itchenor mark",
-    notes: "The standard ISC finish line off the club. Races finishing here cross between the committee boat and the Itchenor mark.",
-    club: "ISC"
-  },
-  {
-    id: "gallon_line_f",
-    code: "F",
-    name: "Gallon Line Post",
-    lat: 50.802, lng: -0.858,
-    color: "#FFFFFF", badgeClass: "badge-white",
-    type: "Finish line",
-    rounding: "Cross between committee boat and gallon line post",
-    notes: "An alternative finish line. The Gallon Line Post is a fixed mark on the Itchenor shore.",
-    club: "ISC"
-  },
-  {
-    id: "rookwood_q",
-    code: "Q",
-    name: "Rookwood",
-    lat: 50.803, lng: -0.857,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Near Rookwood, Chichester Channel. Used in upper harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "park_8",
-    code: "8",
-    name: "Park",
-    lat: 50.812, lng: -0.872,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Chichester Channel mid-section. Used as a windward mark in upper harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "deep_end_d",
-    code: "D",
-    name: "Deep End",
-    lat: 50.818, lng: -0.857,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Upper Chichester Channel. Often the windward mark for courses set from Itchenor.",
-    club: "ISC / CYC"
-  },
-  {
-    id: "fairway",
-    code: "",
-    name: "Fairway",
-    lat: 50.802, lng: -0.850,
-    color: "#FFFFFF", badgeClass: "badge-white",
-    type: "Safe water",
-    rounding: "Pass on either side",
-    notes: "Safe water / fairway mark in the upper Chichester Channel near Itchenor.",
-    club: "General"
-  },
-  {
-    id: "cobner_p",
-    code: "P",
-    name: "Cobner",
-    lat: 50.820, lng: -0.843,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Far upper Chichester Channel toward Dell Quay. Used in the longest harbour courses.",
-    club: "ISC / CYC"
-  },
-  // ── Bosham Channel ───────────────────────────────────────────
-  {
-    id: "roman_transit",
-    code: "",
-    name: "Roman Transit",
-    lat: 50.820, lng: -0.862,
-    color: "#FFFF00", badgeClass: "badge-yellow",
-    type: "Transit mark",
-    rounding: "Transit reference only",
-    notes: "A leading/transit mark. Line it up with the shore mark for a precise position line.",
-    club: "ISC"
-  },
-  {
-    id: "chalkdock_t",
-    code: "T",
-    name: "Chalkdock",
-    lat: 50.833, lng: -0.870,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "Upper harbour near the Bosham Channel. Used in the longest ISC harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "wear_s",
-    code: "S / W",
-    name: "Wear",
-    lat: 50.828, lng: -0.860,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Near Bosham in the upper harbour. Used as a turning mark in longer courses.",
-    club: "ISC"
-  },
-  {
-    id: "baker_u",
-    code: "X / Z",
-    name: "Baker",
-    lat: 50.825, lng: -0.848,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "In the Bosham area. Used as a turning mark in the longest upper harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "peacock_y",
-    code: "Y",
-    name: "Peacock",
-    lat: 50.812, lng: -0.857,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Chichester/Bosham channel junction area. Used in ISC harbour courses.",
-    club: "ISC"
-  },
+  { id:"stocker",       code:"",     name:"Stocker",
+    pos: px(1190, 790), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"Leave to port going north",
+    notes:"Red can buoy Fl(3)R.10s on Stocker Sands. Key channel reference mark.", club:"ISC / CYC" },
+
+  { id:"goal_posts",    code:"",     name:"The Goal Posts",
+    pos: px(1350, 785), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Gate", rounding:"Pass between them as directed",
+    notes:"Two marks forming a gate in the Chichester Channel off Itchenor.", club:"ISC" },
+
+  { id:"creek_post",    code:"",     name:"Creek Post",
+    pos: px(1340, 820), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Off a creek entrance near Itchenor. Close-in turning mark.", club:"ISC" },
+
+  { id:"itchenor_9",    code:"9",    name:"Itchenor",
+    pos: px(1500, 778), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Off Itchenor SC. Leeward mark; club finish line (C) is nearby.", club:"ISC" },
+
+  { id:"club_line_c",   code:"C",    name:"Club Line Finish",
+    pos: px(1533, 745), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Finish line", rounding:"Cross between committee boat and Itchenor mark",
+    notes:"Standard ISC finish line off the club.", club:"ISC" },
+
+  { id:"gallon_line_f", code:"F",    name:"Gallon Line Post",
+    pos: px(1537, 722), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Finish line", rounding:"Cross between committee boat and gallon post",
+    notes:"Alternative finish line. The Gallon Line Post is fixed on the Itchenor shore.", club:"ISC" },
+
+  { id:"rookwood_q",    code:"Q",    name:"Rookwood",
+    pos: px(1540, 705), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Near Rookwood in the Chichester Channel.", club:"ISC" },
+
+  { id:"park_8",        code:"8",    name:"Park",
+    pos: px(1350, 625), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Chichester Channel mid-section. Windward mark in upper harbour courses.", club:"ISC" },
+
+  { id:"deep_end_d",    code:"D",    name:"Deep End",
+    pos: px(1580, 625), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Upper Chichester Channel. Often the windward mark from Itchenor.", club:"ISC / CYC" },
+
+  { id:"fairway",       code:"",     name:"Fairway",
+    pos: px(1645, 730), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Safe water", rounding:"Pass on either side",
+    notes:"Safe water mark in the upper channel near Itchenor.", club:"General" },
+
+  { id:"cobner_p",      code:"P",    name:"Cobner",
+    pos: px(1758, 545), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Far upper Chichester Channel toward Dell Quay. Longest harbour courses.", club:"ISC / CYC" },
+
+  // ── Bosham / Upper harbour ────────────────────────────────────
+  { id:"roman_transit", code:"",     name:"Roman Transit",
+    pos: px(1558, 585), color:"#FFFF00", badgeClass:"badge-yellow",
+    type:"Transit mark", rounding:"Transit reference only",
+    notes:"A leading/transit mark. Line it up for a precise position line.", club:"ISC" },
+
+  { id:"chalkdock_t",   code:"T",    name:"Chalkdock",
+    pos: px(1575, 545), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Upper harbour near Bosham Channel. Used in the longest harbour courses.", club:"ISC" },
+
+  { id:"wear_s",        code:"S / W",name:"Wear",
+    pos: px(1615, 568), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Near Bosham. Turning mark in longer upper harbour courses.", club:"ISC" },
+
+  { id:"baker_xz",      code:"X / Z",name:"Baker",
+    pos: px(1665, 505), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Bosham area. Turning mark in the longest upper harbour courses.", club:"ISC" },
+
+  { id:"peacock_y",     code:"Y",    name:"Peacock",
+    pos: px(1570, 640), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Chichester/Bosham channel area. Used in ISC harbour courses.", club:"ISC" },
+
   // ── Outer harbour ────────────────────────────────────────────
-  {
-    id: "johns_folly_i",
-    code: "I",
-    name: "John's Folly",
-    lat: 50.773, lng: -0.943,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Near the harbour entrance on the Hayling side. A classic outer harbour mark.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "gardner_g",
-    code: "G",
-    name: "Gardner",
-    lat: 50.763, lng: -0.953,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "In the outer harbour approaches. Used as a turning mark for bay and outer harbour courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "east_head_e",
-    code: "E / H",
-    name: "East Head",
-    lat: 50.770, lng: -0.913,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "The sandy spit on the Chichester (eastern) side of the harbour entrance. A classic reaching mark.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "ellanore_4",
-    code: "4",
-    name: "Ellanore",
-    lat: 50.767, lng: -0.920,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Outer harbour, Hayling Bay approaches. Key mark for bay and outer harbour courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "snowhill",
-    code: "",
-    name: "Snowhill",
-    lat: 50.765, lng: -0.910,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "Near Snowhill Creek on the Chichester side. Used in outer harbour courses.",
-    club: "ISC"
-  },
-  {
-    id: "john_davis",
-    code: "",
-    name: "John Davis",
-    lat: 50.758, lng: -0.933,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "As per sailing instructions",
-    notes: "In the outer harbour / bar area. A turning mark for bay courses.",
-    club: "ISC / HISC"
-  },
+  { id:"johns_folly_i", code:"I",    name:"John's Folly",
+    pos: px(596, 900),  color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Near the harbour entrance on the Hayling side. Classic outer harbour mark.", club:"ISC / HISC" },
+
+  { id:"gardner_g",     code:"G",    name:"Gardner",
+    pos: px(505, 1010), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Outer harbour approaches. Turning mark for bay and outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"east_head_eh",  code:"E / H",name:"East Head",
+    pos: px(877, 1000), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Sandy spit on the Chichester side of the harbour entrance. Classic reaching mark.", club:"ISC / HISC" },
+
+  { id:"ellanore_4",    code:"4",    name:"Ellanore",
+    pos: px(760, 1020), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Outer harbour approaches. Key mark for bay and outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"snowhill",      code:"",     name:"Snowhill",
+    pos: px(905, 1055), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Near Snowhill Creek on the Chichester side.", club:"ISC" },
+
+  { id:"john_davis",    code:"",     name:"John Davis",
+    pos: px(698, 1070), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Outer harbour / bar area. A turning mark for bay courses.", club:"ISC / HISC" },
+
   // ── Hayling Bay ──────────────────────────────────────────────
-  {
-    id: "freddie_brooks_b",
-    code: "B",
-    name: "Freddie Brooks",
-    lat: 50.758, lng: -0.963,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Off Hayling Island in the outer harbour / bay. A windward or reaching mark for bay courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "nw_winner",
-    code: "",
-    name: "NW Winner",
-    lat: 50.755, lng: -0.952,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "NW extremity of the Winner Bank. Used as windward or gybe mark in bay courses.",
-    club: "HISC"
-  },
-  {
-    id: "north_winner",
-    code: "",
-    name: "North Winner",
-    lat: 50.760, lng: -0.947,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral",
-    rounding: "Leave to port",
-    notes: "Northern side of the Winner Bank.",
-    club: "HISC"
-  },
-  {
-    id: "mid_winner",
-    code: "",
-    name: "Mid Winner",
-    lat: 50.747, lng: -0.950,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port lateral / race mark",
-    rounding: "Leave to port",
-    notes: "Mid-point of the Winner Bank. Gybe mark in bay windward-leeward courses.",
-    club: "HISC"
-  },
-  {
-    id: "sandhead_n",
-    code: "N",
-    name: "Sandhead",
-    lat: 50.748, lng: -0.927,
-    color: "#FF9900", badgeClass: "badge-orange",
-    type: "Race mark",
-    rounding: "Pass to the north — do not cross inside",
-    notes: "Marks the Sandhead shoal area south of East Head. Course N means pass north of Sandhead and Copynold.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "dunes_o",
-    code: "O",
-    name: "Dunes",
-    lat: 50.742, lng: -0.933,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "Off the dunes on the Hayling Island south shore. Leeward mark for bay courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "calvert_k",
-    code: "J / K",
-    name: "Calvert",
-    lat: 50.733, lng: -0.937,
-    color: "#00BB44", badgeClass: "badge-green",
-    type: "Starboard (S)",
-    rounding: "Leave to starboard",
-    notes: "South of the Winner Bank in Hayling Bay. Used in the longest bay courses.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "treloar_r",
-    code: "R",
-    name: "Treloar",
-    lat: 50.733, lng: -0.952,
-    color: "#FF3300", badgeClass: "badge-red",
-    type: "Port (P)",
-    rounding: "Leave to port",
-    notes: "Southern Hayling Bay. Outer limit mark for the longest bay courses.",
-    club: "ISC / HISC"
-  },
+  { id:"freddie_brooks_b", code:"B", name:"Freddie Brooks",
+    pos: px(445, 1115), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Off Hayling Island in the bay. Windward or reaching mark.", club:"ISC / HISC" },
+
+  { id:"nw_winner",     code:"",     name:"NW Winner",
+    pos: px(485, 1112), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral / race mark", rounding:"Leave to port",
+    notes:"NW extremity of the Winner Bank. Windward or gybe mark.", club:"ISC / HISC" },
+
+  { id:"north_winner",  code:"",     name:"North Winner",
+    pos: px(540, 1078), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"Leave to port",
+    notes:"Northern side of the Winner Bank.", club:"ISC / HISC" },
+
+  { id:"mid_winner",    code:"",     name:"Mid Winner",
+    pos: px(498, 1148), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral / race mark", rounding:"Leave to port",
+    notes:"Mid-point of the Winner Bank. Gybe mark in windward-leeward courses.", club:"ISC / HISC" },
+
+  { id:"sandhead_n",    code:"N",    name:"Sandhead",
+    pos: px(670, 1168), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"Pass to the north — do not cut inside",
+    notes:"Marks the Sandhead shoal. Course N: pass north of Sandhead and Copynold.", club:"ISC / HISC" },
+
+  { id:"dunes_o",       code:"O",    name:"Dunes",
+    pos: px(700, 1185), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Off the dunes on the south shore of Hayling Island. Leeward mark.", club:"ISC / HISC" },
+
+  { id:"calvert_jk",    code:"J / K",name:"Calvert",
+    pos: px(648, 1215), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"South of the Winner Bank in Hayling Bay. Used in longer bay courses.", club:"ISC / HISC" },
+
+  { id:"treloar_r",     code:"R",    name:"Treloar",
+    pos: px(540, 1228), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Southern Hayling Bay. Outer limit mark for the longest courses.", club:"ISC / HISC" },
+
   // ── Inflatable / Zone marks ──────────────────────────────────
-  {
-    id: "beach_zone",
-    code: "★",
-    name: "Beach",
-    lat: 50.737, lng: -0.943,
-    color: "#FFDD00", badgeClass: "badge-yellow",
-    type: "Zone mark (inflatable)",
-    rounding: "As per sailing instructions",
-    notes: "Inflatable zone mark off Hayling Island beach. Exact position set on the day by the race officer.",
-    club: "ISC / HISC"
-  },
-  {
-    id: "tern_zone",
-    code: "★",
-    name: "Tern",
-    lat: 50.763, lng: -0.930,
-    color: "#FFDD00", badgeClass: "badge-yellow",
-    type: "Zone mark (inflatable)",
-    rounding: "As per sailing instructions",
-    notes: "Inflatable zone mark in the outer harbour. Exact position set on the day.",
-    club: "ISC"
-  },
-  {
-    id: "walrus_zone",
-    code: "★",
-    name: "Walrus",
-    lat: 50.778, lng: -0.903,
-    color: "#FFDD00", badgeClass: "badge-yellow",
-    type: "Zone mark (inflatable)",
-    rounding: "As per sailing instructions",
-    notes: "Inflatable zone mark near the harbour entrance. Exact position set on the day.",
-    club: "ISC"
-  },
-  {
-    id: "bay_zone",
-    code: "★",
-    name: "Bay",
-    lat: 50.745, lng: -0.920,
-    color: "#FFDD00", badgeClass: "badge-yellow",
-    type: "Zone mark (inflatable)",
-    rounding: "As per sailing instructions",
-    notes: "Inflatable zone mark for bay courses. Exact position set on the day by the race officer.",
-    club: "ISC / HISC"
-  },
+  { id:"tern_zone",     code:"★",    name:"Tern",
+    pos: px(795, 1000), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark. Exact position set on the day.", club:"ISC" },
+
+  { id:"walrus_zone",   code:"★",    name:"Walrus",
+    pos: px(1005, 960), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark. Exact position set on the day.", club:"ISC" },
+
+  { id:"beach_zone",    code:"★",    name:"Beach",
+    pos: px(618, 1252), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark off Hayling Island beach. Position set on the day.", club:"ISC / HISC" },
+
+  { id:"bay_zone",      code:"★",    name:"Bay",
+    pos: px(670, 1232), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark for bay courses. Position set on the day.", club:"ISC / HISC" },
 ];
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let mode = 'explore';
-let selectedMark = null;
+// ─── Custom marks (localStorage) ─────────────────────────────────────────────
 let customMarks = JSON.parse(localStorage.getItem('chich_custom_marks') || '[]');
-let addingCustom = false;
-let pendingCustomLatLng = null;
+function allMarks() { return [...MARKS, ...customMarks]; }
 
-// Quiz state
-let quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
+// ─── Map setup (CRS.Simple — pixel coordinates, no distortion) ────────────────
+const imgBounds = [[0, 0], [IMG_H, IMG_W]];
 
-// ─── Map ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', {
-  center: [50.790, -0.926],
-  zoom: 12,
-  maxBounds: [[50.650, -1.100], [50.950, -0.750]],
-  maxBoundsViscosity: 0.8
+  crs: L.CRS.Simple,
+  minZoom: -2,
+  maxZoom: 2,
+  zoomControl: true
 });
 
-// ISC Course Card Alpha 2025-2028 as the map base
-// Bounds calibrated from the chart's geographic extent
-const chartBounds = [[50.708, -1.022], [50.875, -0.830]];
-L.imageOverlay('isc-chart.png', chartBounds, {
-  opacity: 1,
+L.imageOverlay('isc-chart.png', imgBounds, {
   attribution: '© Itchenor Sailing Club — Course Card Alpha 2025–2028'
 }).addTo(map);
 
+map.fitBounds(imgBounds, { padding: [10, 10] });
+
 // ─── Marker helpers ───────────────────────────────────────────────────────────
 function makeIcon(color, isSelected) {
-  const r = isSelected ? 11 : 8;
-  const glow = isSelected ? `filter:drop-shadow(0 0 6px ${color})` : '';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${r*3}" height="${r*4}">
-    <circle cx="${r*1.5}" cy="${r}" r="${r}" fill="${color}" stroke="${isSelected ? '#fff' : '#333'}" stroke-width="${isSelected ? 2 : 1.5}" style="${glow}"/>
-    <line x1="${r*1.5}" y1="${r*2}" x2="${r*1.5}" y2="${r*3.5}" stroke="#888" stroke-width="1.5"/>
-    <ellipse cx="${r*1.5}" cy="${r*3.7}" rx="${r*0.6}" ry="${r*0.2}" fill="rgba(0,50,100,0.4)"/>
+  const r = isSelected ? 10 : 7;
+  const ring = isSelected ? `<circle cx="12" cy="12" r="11" fill="none" stroke="#fff" stroke-width="2"/>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+    ${ring}
+    <circle cx="12" cy="12" r="${r}" fill="${color}" stroke="${isSelected ? '#fff' : '#333'}" stroke-width="${isSelected ? 2 : 1.5}"/>
   </svg>`;
   return L.icon({
     iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
-    iconSize: [r * 3, r * 4],
-    iconAnchor: [r * 1.5, r * 4],
-    popupAnchor: [0, -r * 4]
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
   });
 }
 
 const leafletMarkers = {};
-
-function allMarks() {
-  return [...MARKS, ...customMarks];
-}
+let selectedMark = null;
 
 function placeMarkers() {
-  // Clear existing
   Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
   Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
 
   allMarks().forEach(mark => {
+    const latlng = mark.pos || [mark.lat, mark.lng];
     const isSelected = selectedMark && selectedMark.id === mark.id;
-    const m = L.marker([mark.lat, mark.lng], { icon: makeIcon(mark.color, isSelected) })
+    const m = L.marker(latlng, { icon: makeIcon(mark.color, isSelected) })
       .addTo(map)
       .bindTooltip(mark.name, { direction: 'top', className: 'mark-tooltip' });
 
-    m.on('click', () => {
+    m.on('click', e => {
       if (mode === 'explore') {
         selectMark(mark);
       } else if (mode === 'name-quiz') {
-        handleNameQuizClick(mark, m);
+        handleNameQuizAnswer(mark.name);
+      } else if (mode === 'locate-quiz' && !quiz.answered) {
+        // Clicking directly on a marker counts as clicking its exact position
+        L.DomEvent.stopPropagation(e);
+        map.off('click', handleLocateClick);
+        handleLocateClick({ latlng: L.latLng(latlng[0], latlng[1]) });
       }
     });
-
     leafletMarkers[mark.id] = m;
   });
 }
 
-// ─── Mode switching ───────────────────────────────────────────────────────────
-function setMode(m) {
-  mode = m;
-  ['explore', 'name-quiz', 'locate-quiz'].forEach(id => {
-    document.getElementById('btn-' + id).classList.toggle('active', id === m);
-  });
+// ─── State ────────────────────────────────────────────────────────────────────
+let mode = 'explore';
+let addingCustom = false;
+let pendingCustomLatLng = null;
+let quiz = { score: 0, total: 0, current: null, answered: false, queue: [] };
+let locateCircle = null;
 
-  map.getContainer().classList.toggle('quiz-locate', m === 'locate-quiz');
-  document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
-
-  selectedMark = null;
-  placeMarkers();
-
-  if (m === 'explore') {
-    renderExplorePanel();
-  } else if (m === 'name-quiz') {
-    startNameQuiz();
-  } else if (m === 'locate-quiz') {
-    startLocateQuiz();
-  }
+// ─── Panel collapse ───────────────────────────────────────────────────────────
+let panelCollapsed = false;
+function togglePanel() {
+  panelCollapsed = !panelCollapsed;
+  document.getElementById('panel').classList.toggle('collapsed', panelCollapsed);
+  document.getElementById('panel-toggle').textContent = panelCollapsed ? '▶' : '◀';
 }
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+let currentTab = 'info';
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.panel-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === name));
+  ['info', 'list', 'quiz'].forEach(id => {
+    document.getElementById('tab-' + id).style.display = id === name ? 'block' : 'none';
+  });
+  if (name === 'list') buildMarkList();
+  if (name === 'quiz' && quiz.total === 0) startQuiz();
+}
+
+document.querySelectorAll('.panel-tab').forEach(tab =>
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
 
 // ─── Explore mode ─────────────────────────────────────────────────────────────
-function renderExplorePanel() {
-  const pb = document.getElementById('panel-body');
-  const marks = allMarks();
-
-  let html = '<p class="hint-text" style="margin-bottom:12px">Click a buoy on the map or a mark below</p>';
-  marks.forEach(mark => {
-    const codeTag = mark.code ? `<span style="font-size:0.68rem;color:#f39c12;font-weight:700;margin-left:4px">[${mark.code}]</span>` : '';
-    html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
-      <div class="mark-dot" style="background:${mark.color}"></div>
-      <div>
-        <div class="mark-list-name">${mark.name}${codeTag}</div>
-        <div class="mark-list-type">${mark.type} · ${mark.club || 'Custom'}</div>
-      </div>
-    </div>`;
-  });
-
-  pb.innerHTML = html;
-  window.MARK_MAP = {};
-  allMarks().forEach(mk => window.MARK_MAP[mk.id] = mk);
-}
-
 function selectMark(mark) {
   selectedMark = mark;
   placeMarkers();
+  map.panTo(mark.pos || [mark.lat, mark.lng]);
 
-  // Pan to mark
-  map.panTo([mark.lat, mark.lng]);
+  switchTab('info');
+  const codeHtml = mark.code
+    ? `<span style="font-size:.9rem;font-weight:900;color:#f39c12;background:#2a1f00;border:1px solid #6a4f00;border-radius:5px;padding:1px 8px;margin-left:6px">${mark.code}</span>`
+    : '';
 
-  const pb = document.getElementById('panel-body');
-
-  const latStr = mark.lat.toFixed(4) + '°N';
-  const lngStr = Math.abs(mark.lng).toFixed(4) + '°W';
-  const dms = toDMS(mark.lat, mark.lng);
-  const codeHtml = mark.code ? `<span style="display:inline-block;font-size:1rem;font-weight:900;color:#f39c12;background:#2a1f00;border:1px solid #6a4f00;border-radius:6px;padding:2px 10px;margin-left:8px;letter-spacing:0.05em">${mark.code}</span>` : '';
-
-  pb.innerHTML = `
-    <div style="margin-bottom:10px">
-      <button onclick="renderExplorePanel()" style="background:none;border:none;color:#5d8ab5;cursor:pointer;font-size:0.78rem">← All marks</button>
+  document.getElementById('tab-info').innerHTML = `
+    <div style="margin-bottom:8px">
+      <button onclick="clearSelection()" style="background:none;border:none;color:#5d8ab5;cursor:pointer;font-size:0.74rem">← All marks</button>
     </div>
     <div class="mark-name">${mark.name}${codeHtml}</div>
     <span class="mark-badge ${mark.badgeClass || 'badge-yellow'}">${mark.type}</span>
-
-    <div class="detail-row">
-      <span class="detail-label">Club</span>
-      <span class="detail-value">${mark.club || 'Custom'}</span>
-    </div>
     <div class="detail-row">
       <span class="detail-label">Rounding</span>
       <span class="detail-value">${mark.rounding || '—'}</span>
     </div>
     <div class="detail-row">
+      <span class="detail-label">Club</span>
+      <span class="detail-value">${mark.club || 'Custom'}</span>
+    </div>
+    <div class="detail-row">
       <span class="detail-label">Notes</span>
       <span class="detail-value">${mark.notes || '—'}</span>
     </div>
-    <div class="coords">${dms}<br>${latStr}, ${lngStr}</div>
-    ${mark.custom ? `<button onclick="deleteCustomMark('${mark.id}')" style="margin-top:14px;padding:6px 12px;background:#3a0d0d;border:1px solid #7a2020;border-radius:6px;color:#ff8a8a;font-size:0.75rem;cursor:pointer">Delete mark</button>` : ''}
+    ${mark.custom ? `<button onclick="deleteCustomMark('${mark.id}')" style="margin-top:10px;padding:5px 10px;background:#3a0d0d;border:1px solid #7a2020;border-radius:5px;color:#ff8a8a;font-size:0.72rem;cursor:pointer">Delete mark</button>` : ''}
   `;
-
-  window.MARK_MAP = window.MARK_MAP || {};
-  window.MARK_MAP[mark.id] = mark;
 }
 
-function toDMS(lat, lng) {
-  function fmt(val, pos, neg) {
-    const d = Math.floor(Math.abs(val));
-    const mf = (Math.abs(val) - d) * 60;
-    const m = Math.floor(mf);
-    const s = ((mf - m) * 60).toFixed(0);
-    return `${d}°${m}'${s}" ${val >= 0 ? pos : neg}`;
-  }
-  return fmt(lat, 'N', 'S') + '  ' + fmt(lng, 'E', 'W');
+function clearSelection() {
+  selectedMark = null;
+  placeMarkers();
+  document.getElementById('tab-info').innerHTML = '<p class="hint-text">Click any mark on the chart to see details.</p>';
 }
 
-// ─── Name quiz ────────────────────────────────────────────────────────────────
-function startNameQuiz() {
-  quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
-  nextNameQuestion();
-}
-
-function nextNameQuestion() {
+function buildMarkList() {
   const marks = allMarks();
-  if (quiz.queue.length === 0) {
-    quiz.queue = shuffle([...marks]);
-  }
-  quiz.q = quiz.queue.pop();
+  let html = '';
+  marks.forEach(mark => {
+    const code = mark.code ? `<span style="font-size:.65rem;color:#f39c12;font-weight:700;margin-left:3px">[${mark.code}]</span>` : '';
+    html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
+      <div class="mark-dot" style="background:${mark.color}"></div>
+      <div>
+        <div class="mark-list-name">${mark.name}${code}</div>
+        <div class="mark-list-type">${mark.type}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('tab-list').innerHTML = html || '<p class="hint-text">No marks.</p>';
+  window.MARK_MAP = {};
+  allMarks().forEach(m => window.MARK_MAP[m.id] = m);
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+function startQuiz() {
+  quiz = { score: 0, total: 0, current: null, answered: false, queue: [] };
+  nextQuestion();
+}
+
+let quizMode = 'name'; // 'name' or 'locate'
+
+function nextQuestion() {
+  const marks = allMarks();
+  if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
+  quiz.current = quiz.queue.pop();
   quiz.answered = false;
 
-  // Pan to the mark
-  map.panTo([quiz.q.lat, quiz.q.lng]);
+  // Alternate between name and locate quiz every few questions
+  quizMode = (quiz.total % 2 === 0) ? 'name' : 'locate';
 
-  // Pulse the marker
-  if (leafletMarkers[quiz.q.id]) {
-    leafletMarkers[quiz.q.id].openTooltip();
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-next').classList.remove('visible');
+
+  if (quizMode === 'name') {
+    runNameQuestion(marks);
+  } else {
+    runLocateQuestion();
   }
-
-  // Build distractors
-  const distractors = shuffle(marks.filter(m => m.id !== quiz.q.id)).slice(0, 3).map(m => m.name);
-  const options = shuffle([quiz.q.name, ...distractors]);
-
-  const pb = document.getElementById('panel-body');
-  pb.innerHTML = `
-    <div class="quiz-panel">
-      <div class="quiz-status">Score: ${quiz.score} / ${quiz.total}</div>
-      <div class="quiz-prompt">What is this mark? (highlighted on map)</div>
-      <div class="quiz-options">${options.map(o =>
-        `<button class="qbtn" onclick="answerNameQuiz('${escapeQ(o)}')">${o}</button>`
-      ).join('')}</div>
-      <div class="quiz-feedback" id="qfb"></div>
-      <button class="next-btn" id="qnext" onclick="nextNameQuestion()">Next →</button>
-    </div>
-  `;
 }
 
-function answerNameQuiz(answer) {
-  if (quiz.answered) return;
+function runNameQuestion(marks) {
+  // Highlight the mark on the map
+  selectedMark = quiz.current;
+  placeMarkers();
+  map.panTo(quiz.current.pos || [quiz.current.lat, quiz.current.lng]);
+
+  const distractors = shuffle(marks.filter(m => m.id !== quiz.current.id)).slice(0, 3).map(m => m.name);
+  const options = shuffle([quiz.current.name, ...distractors]);
+
+  document.getElementById('quiz-question').textContent = 'What is this mark? (highlighted on chart)';
+  document.getElementById('quiz-target').style.display = 'none';
+  document.getElementById('quiz-options').innerHTML = options.map(o =>
+    `<button class="qbtn" onclick="handleNameQuizAnswer('${escQ(o)}')">${o}</button>`
+  ).join('');
+
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+}
+
+function runLocateQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  document.getElementById('quiz-question').textContent = 'Click on the chart where this mark is:';
+  document.getElementById('quiz-target').style.display = 'block';
+  document.getElementById('quiz-target').textContent = quiz.current.name;
+  document.getElementById('quiz-options').innerHTML = '';
+  document.getElementById('quiz-feedback').textContent = 'Click the chart...';
+
+  map.getContainer().classList.add('quiz-locate');
+  map.once('click', handleLocateClick);
+}
+
+function handleNameQuizAnswer(answer) {
+  if (quiz.answered || quizMode !== 'name') return;
   quiz.answered = true;
   quiz.total++;
 
-  const correct = answer === quiz.q.name;
+  const correct = answer === quiz.current.name;
   if (correct) quiz.score++;
 
   document.querySelectorAll('.qbtn').forEach(btn => {
     btn.disabled = true;
-    if (btn.textContent === quiz.q.name) btn.classList.add('correct');
+    if (btn.textContent === quiz.current.name) btn.classList.add('correct');
     else if (btn.textContent === answer && !correct) btn.classList.add('wrong');
   });
 
-  const fb = document.getElementById('qfb');
-  if (correct) {
-    fb.className = 'quiz-feedback feedback-correct';
-    fb.textContent = '✓ Correct! ' + quiz.q.rounding;
-  } else {
-    fb.className = 'quiz-feedback feedback-wrong';
-    fb.textContent = '✗ That was ' + quiz.q.name + '. ' + quiz.q.rounding;
-  }
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct
+    ? `✓ Correct! ${quiz.current.rounding}`
+    : `✗ That was ${quiz.current.name}. ${quiz.current.rounding}`;
 
-  document.getElementById('qnext').classList.add('visible');
-
-  // Update score line
-  const status = document.querySelector('.quiz-status');
-  if (status) status.textContent = `Score: ${quiz.score} / ${quiz.total}`;
-}
-
-// ─── Locate quiz ──────────────────────────────────────────────────────────────
-let locateCircle = null;
-
-function startLocateQuiz() {
-  quiz = { score: 0, total: 0, q: null, answered: false, queue: [] };
-  map.on('click', handleLocateClick);
-  nextLocateQuestion();
-}
-
-function nextLocateQuestion() {
-  const marks = allMarks();
-  if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
-  quiz.q = quiz.queue.pop();
-  quiz.answered = false;
-
-  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
-
-  // Zoom out so user has to find it
-  map.setView([50.790, -0.915], 12);
-
-  // Hide tooltips so mark name isn't visible
-  Object.values(leafletMarkers).forEach(m => m.closeTooltip());
-
-  const pb = document.getElementById('panel-body');
-  pb.innerHTML = `
-    <div class="quiz-panel">
-      <div class="quiz-status">Score: ${quiz.score} / ${quiz.total}</div>
-      <div class="quiz-prompt">Click on the map where you think this mark is:</div>
-      <div class="quiz-target">${quiz.q.name}</div>
-      <div class="detail-row" style="justify-content:center;margin-bottom:8px">
-        <span class="mark-badge ${quiz.q.badgeClass || 'badge-yellow'}">${quiz.q.type}</span>
-      </div>
-      <div class="quiz-feedback" id="qfb">Click the map...</div>
-      <button class="next-btn" id="qnext" onclick="nextLocateQuestion()">Next →</button>
-    </div>
-  `;
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-next').classList.add('visible');
 }
 
 function handleLocateClick(e) {
-  if (mode !== 'locate-quiz' || quiz.answered) return;
+  if (quiz.answered || quizMode !== 'locate') return;
   quiz.answered = true;
   quiz.total++;
+  map.getContainer().classList.remove('quiz-locate');
 
-  const dist = map.distance(e.latlng, [quiz.q.lat, quiz.q.lng]);
-  const correct = dist < 1000; // within 1 km
-  const close   = dist < 2500;
-
+  const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
+  const dist = Math.sqrt(
+    Math.pow(e.latlng.lat - target[0], 2) +
+    Math.pow(e.latlng.lng - target[1], 2)
+  );
+  // dist is in pixels (CRS.Simple units). 100px ~ very good, 300px ~ close
+  const correct = dist < 120;
+  const close   = dist < 350;
   if (correct) quiz.score++;
 
-  // Show where the mark actually is
   if (locateCircle) map.removeLayer(locateCircle);
-  locateCircle = L.circle([quiz.q.lat, quiz.q.lng], {
-    radius: 200,
+  locateCircle = L.circleMarker(target, {
+    radius: 18,
     color: correct ? '#2ecc71' : '#e74c3c',
-    fillOpacity: 0.25,
+    fillColor: correct ? '#2ecc71' : '#e74c3c',
+    fillOpacity: 0.3,
     weight: 2
   }).addTo(map);
 
-  // Pan to reveal the answer
-  map.panTo([quiz.q.lat, quiz.q.lng]);
-  if (leafletMarkers[quiz.q.id]) leafletMarkers[quiz.q.id].openTooltip();
+  map.panTo(target);
+  if (leafletMarkers[quiz.current.id]) leafletMarkers[quiz.current.id].openTooltip();
 
-  const fb = document.getElementById('qfb');
+  const fb = document.getElementById('quiz-feedback');
   if (correct) {
     fb.className = 'quiz-feedback feedback-correct';
-    fb.textContent = `✓ Spot on! Within ${Math.round(dist)}m`;
+    fb.textContent = `✓ Spot on! (${Math.round(dist)}px away)`;
   } else if (close) {
     fb.className = 'quiz-feedback feedback-hint';
-    fb.textContent = `Close — ${(dist / 1000).toFixed(1)}km away. Circle shows actual position.`;
+    fb.textContent = `Close! ${Math.round(dist)}px away. Circle = actual position.`;
   } else {
     fb.className = 'quiz-feedback feedback-wrong';
-    fb.textContent = `✗ ${(dist / 1000).toFixed(1)}km out. Circle shows actual position.`;
+    fb.textContent = `✗ ${Math.round(dist)}px away. Circle = actual position.`;
   }
 
-  const status = document.querySelector('.quiz-status');
-  if (status) status.textContent = `Score: ${quiz.score} / ${quiz.total}`;
-  document.getElementById('qnext').classList.add('visible');
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-next').classList.add('visible');
+}
+
+// ─── Mode switching ───────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  ['explore', 'name-quiz', 'locate-quiz'].forEach(id =>
+    document.getElementById('btn-' + id).classList.toggle('active', id === m));
+
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
+  selectedMark = null;
+  placeMarkers();
+
+  if (m === 'explore') {
+    clearSelection();
+  } else if (m === 'name-quiz') {
+    switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'name'; nextQuestion();
+  } else if (m === 'locate-quiz') {
+    switchTab('quiz'); quiz = { score: 0, total: 0, current: null, answered: false, queue: [] }; quizMode = 'locate'; nextQuestion();
+  }
 }
 
 // ─── Custom marks ─────────────────────────────────────────────────────────────
@@ -1308,9 +983,9 @@ function toggleAddMode() {
   if (addingCustom) {
     map.once('click', e => {
       pendingCustomLatLng = e.latlng;
-      document.getElementById('add-form').querySelector('input').focus();
       document.querySelector('#add-form p').textContent =
-        `Position set: ${e.latlng.lat.toFixed(4)}°N, ${Math.abs(e.latlng.lng).toFixed(4)}°W — fill in details below.`;
+        `Position set at pixel (${Math.round(e.latlng.lng)}, ${Math.round(IMG_H - e.latlng.lat)}) — fill in details below.`;
+      document.getElementById('new-name').focus();
     });
   } else {
     pendingCustomLatLng = null;
@@ -1319,25 +994,22 @@ function toggleAddMode() {
 
 function saveCustomMark() {
   const name = document.getElementById('new-name').value.trim();
-  if (!name) { alert('Please enter a name for the mark.'); return; }
-  if (!pendingCustomLatLng) { alert('Please click the map first to set the position.'); return; }
+  if (!name) { alert('Please enter a name.'); return; }
+  if (!pendingCustomLatLng) { alert('Please click the chart to set position first.'); return; }
 
   const color = document.getElementById('new-color').value;
   const type  = document.getElementById('new-type').value;
   const notes = document.getElementById('new-notes').value.trim();
-
   const badgeMap = {
-    '#FF3300': 'badge-red', '#FF9900': 'badge-orange', '#FFFF00': 'badge-yellow',
-    '#00BB44': 'badge-green', '#222222': 'badge-black', '#FFFFFF': 'badge-white',
-    '#FF6600': 'badge-orange'
+    '#FF3300':'badge-red','#FFFF00':'badge-yellow','#00BB44':'badge-green',
+    '#FF9900':'badge-orange','#FFFFFF':'badge-white'
   };
-
   const mark = {
     id: 'custom_' + Date.now(),
     name, type, notes, color,
+    code: '',
     badgeClass: badgeMap[color] || 'badge-yellow',
-    lat: pendingCustomLatLng.lat,
-    lng: pendingCustomLatLng.lng,
+    pos: [pendingCustomLatLng.lat, pendingCustomLatLng.lng],
     rounding: type,
     club: 'Custom',
     custom: true
@@ -1354,7 +1026,6 @@ function saveCustomMark() {
   document.getElementById('new-notes').value = '';
 
   placeMarkers();
-  renderExplorePanel();
   selectMark(mark);
 }
 
@@ -1363,12 +1034,14 @@ function deleteCustomMark(id) {
   localStorage.setItem('chich_custom_marks', JSON.stringify(customMarks));
   selectedMark = null;
   placeMarkers();
-  renderExplorePanel();
+  clearSelection();
 }
 
-window.deleteCustomMark = deleteCustomMark;
-window.renderExplorePanel = renderExplorePanel;
 window.selectMark = selectMark;
+window.clearSelection = clearSelection;
+window.deleteCustomMark = deleteCustomMark;
+window.MARK_MAP = {};
+allMarks().forEach(m => window.MARK_MAP[m.id] = m);
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function shuffle(arr) {
@@ -1380,13 +1053,10 @@ function shuffle(arr) {
   return a;
 }
 
-function escapeQ(s) {
-  return s.replace(/'/g, "\\'");
-}
+function escQ(s) { return s.replace(/'/g, "\\'"); }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 placeMarkers();
-renderExplorePanel();
 </script>
 </body>
 </html>
