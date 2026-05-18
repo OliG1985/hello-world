@@ -63,17 +63,6 @@
       filter: blur(6px) brightness(0.7);
     }
 
-    /* Key blocker overlay — sits over the bottom-right key area */
-    #key-blocker {
-      display: none;
-      position: absolute;
-      bottom: 0; right: 0;
-      width: 42%; height: 45%;
-      background: #111;
-      z-index: 500;
-      pointer-events: none;
-    }
-    #key-blocker.visible { display: block; }
 
     /* Difficulty toggle in header */
     .diff-toggle {
@@ -551,9 +540,7 @@
 </header>
 
 <div class="layout">
-  <div id="map">
-    <div id="key-blocker"></div>
-  </div>
+  <div id="map"></div>
 
   <div id="panel">
     <button id="panel-toggle" onclick="togglePanel()" title="Collapse/expand panel">◀</button>
@@ -1560,7 +1547,6 @@ function setDifficulty(d) {
   document.getElementById('diff-easy').classList.toggle('active', d === 'easy');
   document.getElementById('diff-hard').classList.toggle('active', d === 'hard');
   map.getContainer().classList.toggle('hard-mode', d === 'hard');
-  document.getElementById('key-blocker').classList.toggle('visible', d === 'hard');
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
