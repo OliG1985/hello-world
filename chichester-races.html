@@ -120,6 +120,22 @@
       transition: width 0.4s;
     }
 
+    .reset-mastery-btn {
+      background: none; border: 1px solid #3a2000; border-radius: 5px;
+      color: #806040; font-size: 0.7rem; padding: 4px 10px; cursor: pointer;
+    }
+    .reset-mastery-btn:hover { border-color: #cc5500; color: #ffb07a; }
+    .reset-yes {
+      flex: 1; padding: 6px; background: #6a0000; border: 1px solid #cc2200;
+      border-radius: 5px; color: #ffaaaa; font-size: 0.78rem; cursor: pointer;
+    }
+    .reset-yes:hover { background: #8a0000; }
+    .reset-no {
+      flex: 1; padding: 6px; background: #1a2a3a; border: 1px solid #3a5070;
+      border-radius: 5px; color: #8ea8cc; font-size: 0.78rem; cursor: pointer;
+    }
+    .reset-no:hover { background: #243a50; }
+
     /* ── Panel ── */
     #panel {
       width: 240px;
@@ -635,6 +651,16 @@
             <div class="diff-choice-title">Learn 📚</div>
             <div class="diff-choice-desc">Infinite questions. Marks you get wrong come up more often. Tracks your overall mastery %.</div>
           </button>
+          <div id="reset-mastery-area" style="margin-top:6px;text-align:center">
+            <button class="reset-mastery-btn" onclick="showResetConfirm()">Reset mastery scores</button>
+            <div id="reset-confirm" style="display:none;margin-top:8px;padding:10px;background:#1a0e00;border:1px solid #6a2000;border-radius:7px;font-size:0.78rem;color:#ffb07a">
+              This will clear all your progress. Are you sure?
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="reset-yes" onclick="confirmResetMastery()">Yes, reset</button>
+                <button class="reset-no"  onclick="cancelResetMastery()">Cancel</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div id="quiz-ui" style="display:none">
           <div class="quiz-panel">
@@ -1290,6 +1316,19 @@ function updateScoreDisplay() {
   } else {
     document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
   }
+}
+
+function showResetConfirm() {
+  document.getElementById('reset-confirm').style.display = 'block';
+}
+function cancelResetMastery() {
+  document.getElementById('reset-confirm').style.display = 'none';
+}
+function confirmResetMastery() {
+  markMastery = {};
+  localStorage.removeItem('isc_mastery');
+  document.getElementById('reset-confirm').style.display = 'none';
+  updateMasteryDisplay();
 }
 
 function showDifficultyPicker() {
