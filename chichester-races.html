@@ -1284,6 +1284,7 @@ function nextQuestion() {
   const marks = allMarks();
   if (quizMode === 'learn') {
     quiz.current = pickWeightedMark();
+    chartOverlay.setUrl(getMastery(quiz.current.id) > 7.5 ? 'isc-chart-hard.png' : 'isc-chart.png');
   } else {
     if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
     quiz.current = quiz.queue.pop();
