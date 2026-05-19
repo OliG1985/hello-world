@@ -1130,6 +1130,13 @@ function makeIcon(color, isSelected) {
 const leafletMarkers = {};
 let selectedMark = null;
 
+function markColor(mark) {
+  const r = effectiveRounding(mark);
+  if (r === 'Leave to port')      return '#FF3300';
+  if (r === 'Leave to starboard') return '#00BB44';
+  return '#FF9900';
+}
+
 function placeMarkers() {
   Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
   Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
@@ -1138,7 +1145,7 @@ function placeMarkers() {
     if (mark.noLocate) return;
     const latlng = mark.pos || [mark.lat, mark.lng];
     const isSelected = selectedMark && selectedMark.id === mark.id;
-    const m = L.marker(latlng, { icon: makeIcon(mark.color, isSelected) })
+    const m = L.marker(latlng, { icon: makeIcon(markColor(mark), isSelected) })
       .addTo(map)
       .bindTooltip(mark.name, { direction: 'top', className: 'mark-tooltip' });
 
@@ -1236,7 +1243,7 @@ function buildMarkList() {
   marks.forEach(mark => {
     const code = mark.code ? `<span style="font-size:.65rem;color:#f39c12;font-weight:700;margin-left:3px">[${mark.code}]</span>` : '';
     html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
-      <div class="mark-dot" style="background:${mark.color}"></div>
+      <div class="mark-dot" style="background:${markColor(mark)}"></div>
       <div>
         <div class="mark-list-name">${mark.name}${code}</div>
         <div class="mark-list-type">${mark.type}</div>
