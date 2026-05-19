@@ -1186,7 +1186,10 @@ let quizMode = 'round'; // 'round' | 'learn'
 let markMastery = JSON.parse(localStorage.getItem('isc_mastery') || '{}');
 
 function getMastery(id) {
-  if (markMastery[id] === undefined) markMastery[id] = 5;
+  if (markMastery[id] === undefined) {
+    const mark = window.MARK_MAP && window.MARK_MAP[id];
+    markMastery[id] = (mark && mark.code) ? 3 : 7;
+  }
   return markMastery[id];
 }
 
