@@ -1176,9 +1176,17 @@ function buildMarkList() {
 // Round ends when accumulated possible base points reaches TARGET_PTS.
 const TARGET_PTS = 2;
 
+function hasRoundingQ(mark) {
+  return mark.rounding === 'Leave to port' || mark.rounding === 'Leave to starboard';
+}
+
 function markBasePts(mark) {
   const hasCode = mark.code && mark.code !== '★';
-  return (hasCode && !mark.noLocate) ? 2 : 1;
+  let pts = 0;
+  if (hasCode)           pts++; // name question
+  if (hasRoundingQ(mark)) pts++; // port/starboard question
+  if (!mark.noLocate)    pts++; // locate question
+  return Math.max(pts, 1);
 }
 
 // ─── Learn mode — spaced repetition ──────────────────────────────────────────
@@ -1305,6 +1313,9 @@ function nextQuestion() {
   if (hasCode) {
     quiz.phase = 'name';
     runSymbolQuestion();
+  } else if (hasRoundingQ(quiz.current)) {
+    quiz.phase = 'rounding';
+    runRoundingQuestion();
   } else {
     quiz.phase = 'locate';
     runLocateQuestion();
@@ -1377,14 +1388,82 @@ function handleSymbolAnswer(answer) {
 
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
-  fb.textContent = correct
-    ? '✓ Correct! Now find it on the map.'
-    : `✗ That was ${quiz.current.name}. Now find it on the map.`;
+  fb.textContent = correct ? '✓ Correct!' : `✗ That was ${quiz.current.name}.`;
   updateScoreDisplay();
 
   const nextBtn = document.getElementById('quiz-next');
-  nextBtn.textContent = quiz.current.noLocate ? 'Next →' : 'Find it on the map →';
-  nextBtn.onclick = transitionToLocate;
+  if (hasRoundingQ(quiz.current)) {
+    nextBtn.textContent = 'Port or starboard? →';
+    nextBtn.onclick = transitionToRounding;
+  } else if (quiz.current.noLocate) {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQuestion;
+  } else {
+    nextBtn.textContent = 'Find it on the map →';
+    nextBtn.onclick = transitionToLocate;
+  }
+  nextBtn.classList.add('visible');
+}
+
+function transitionToRounding() {
+  quiz.answered = false;
+  quiz.phase = 'rounding';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.classList.remove('visible');
+  runRoundingQuestion();
+}
+
+function runRoundingQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+
+  const mark = quiz.current;
+  document.getElementById('quiz-question').textContent = `How do you leave ${mark.name}?`;
+  document.getElementById('quiz-target').style.display = 'none';
+  document.getElementById('quiz-options').innerHTML =
+    `<button class="qbtn" onclick="handleRoundingAnswer('port')">🔴 Port</button>` +
+    `<button class="qbtn" onclick="handleRoundingAnswer('starboard')">🟢 Starboard</button>`;
+  document.getElementById('quiz-feedback').textContent = '';
+}
+
+function handleRoundingAnswer(answer) {
+  if (quiz.answered || quiz.phase !== 'rounding') return;
+  quiz.answered = true;
+  quiz.total += 1;
+
+  const correctSide = quiz.current.rounding === 'Leave to port' ? 'port' : 'starboard';
+  const correct = answer === correctSide;
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+
+  document.querySelectorAll('.qbtn').forEach(btn => {
+    btn.disabled = true;
+    const side = btn.textContent.includes('Port') ? 'port' : 'starboard';
+    if (side === correctSide) btn.classList.add('correct');
+    else if (side === answer && !correct) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct
+    ? `✓ Correct — leave to ${correctSide}.`
+    : `✗ Wrong — leave to ${correctSide}.`;
+  updateScoreDisplay();
+
+  const nextBtn = document.getElementById('quiz-next');
+  if (quiz.current.noLocate) {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQuestion;
+  } else {
+    nextBtn.textContent = 'Find it on the map →';
+    nextBtn.onclick = transitionToLocate;
+  }
   nextBtn.classList.add('visible');
 }
 
