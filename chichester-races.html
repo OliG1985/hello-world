@@ -1198,8 +1198,7 @@ function updateMastery(id, correct) {
 }
 
 function markWeight(id) {
-  // Higher mastery → lower weight → seen less often. Min weight 0.2.
-  return Math.max(0.2, 10.5 - getMastery(id));
+  return Math.pow(11 - getMastery(id), 1.5);
 }
 
 function pickWeightedMark() {
