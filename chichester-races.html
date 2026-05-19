@@ -546,6 +546,40 @@
       padding: 0 4px;
     }
 
+    /* Rounding editor tab within cal-panel */
+    .cal-tabs {
+      display: flex;
+      border-bottom: 1px solid #3a2000;
+      flex-shrink: 0;
+    }
+    .cal-tab {
+      flex: 1; padding: 7px 4px; text-align: center;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; color: #806040; font-size: 0.72rem;
+      font-weight: 600; cursor: pointer;
+    }
+    .cal-tab.active { color: #ffb07a; border-bottom-color: #ffb07a; }
+    #cal-rounding { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    #cal-rounding.visible { display: flex; }
+    .rounding-list {
+      flex: 1; overflow-y: auto; padding: 8px 10px;
+    }
+    .rounding-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 0; border-bottom: 1px solid #2a1800;
+      font-size: 0.73rem;
+    }
+    .rounding-name { flex: 1; color: #c8a070; }
+    .rounding-btns { display: flex; gap: 3px; }
+    .rbtn {
+      padding: 2px 7px; border-radius: 4px; font-size: 0.68rem;
+      border: 1px solid #3a2000; background: none;
+      color: #806040; cursor: pointer;
+    }
+    .rbtn.active-port  { background: #5c1010; color: #ff8a8a; border-color: #ff8a8a; }
+    .rbtn.active-stbd  { background: #0a3a18; color: #7affa8; border-color: #7affa8; }
+    .rbtn.active-none  { background: #2a2a2a; color: #aaa;    border-color: #555; }
+
     .disclaimer {
       padding: 4px 10px;
       font-size: 0.62rem;
@@ -668,6 +702,11 @@
 
   <!-- Calibration wizard panel (shown instead of normal panel) -->
   <div id="cal-panel">
+    <div class="cal-tabs">
+      <button class="cal-tab active" onclick="switchCalTab('positions')">📍 Positions</button>
+      <button class="cal-tab"        onclick="switchCalTab('rounding')">🔄 Rounding</button>
+    </div>
+    <div id="cal-positions">
     <div class="cal-header">
       <div class="cal-progress-bar"><div class="cal-progress-fill" id="cal-progress-fill"></div></div>
       <div class="cal-step"    id="cal-step">Mark 1 of 0</div>
@@ -688,6 +727,13 @@
       <button class="cal-copy-btn" onclick="copyCalibration()">📋 Copy corrected coordinates</button>
     </div>
     <div class="cal-skip-list" id="cal-skip-list"></div>
+    </div><!-- end #cal-positions -->
+    <div id="cal-rounding">
+      <div class="rounding-list" id="rounding-list"></div>
+      <div style="padding:10px;flex-shrink:0">
+        <button class="cal-copy-btn" style="width:100%" onclick="copyRoundingData()">📋 Copy rounding data</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1177,7 +1223,8 @@ function buildMarkList() {
 const TARGET_PTS = 2;
 
 function hasRoundingQ(mark) {
-  return mark.rounding === 'Leave to port' || mark.rounding === 'Leave to starboard';
+  const r = effectiveRounding(mark);
+  return r === 'Leave to port' || r === 'Leave to starboard';
 }
 
 function markBasePts(mark) {
@@ -1434,7 +1481,7 @@ function handleRoundingAnswer(answer) {
   quiz.answered = true;
   quiz.total += 1;
 
-  const correctSide = quiz.current.rounding === 'Leave to port' ? 'port' : 'starboard';
+  const correctSide = effectiveRounding(quiz.current) === 'Leave to port' ? 'port' : 'starboard';
   const correct = answer === correctSide;
   if (quizMode === 'round') {
     const pts = difficulty === 'hard' ? 2 : 1;
@@ -1538,6 +1585,66 @@ function handleLocateClick(correct) {
 let calPositions  = {};   // id → [lat, lng] in CRS.Simple pixel space
 let calIndex      = 0;
 let calMarkerTemp = null; // temporary marker for the current step
+
+// ─── Rounding editor ─────────────────────────────────────────────────────────
+let roundingOverrides = JSON.parse(localStorage.getItem('isc_rounding') || '{}');
+
+function effectiveRounding(mark) {
+  const ov = roundingOverrides[mark.id];
+  if (ov === 'port')     return 'Leave to port';
+  if (ov === 'starboard') return 'Leave to starboard';
+  if (ov === 'none')     return 'none';
+  return mark.rounding;
+}
+
+function switchCalTab(name) {
+  document.querySelectorAll('.cal-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0) === (name === 'positions')));
+  document.getElementById('cal-positions').style.display = name === 'positions' ? '' : 'none';
+  const rDiv = document.getElementById('cal-rounding');
+  rDiv.classList.toggle('visible', name === 'rounding');
+  if (name === 'rounding') buildRoundingEditor();
+}
+
+function buildRoundingEditor() {
+  const marks = MARKS;
+  const html = marks.map(m => {
+    const eff = effectiveRounding(m);
+    const isPort = eff === 'Leave to port';
+    const isStbd = eff === 'Leave to starboard';
+    const isNone = !isPort && !isStbd;
+    return `<div class="rounding-row">
+      <span class="rounding-name">${m.name}${m.code ? ` <span style="color:#f39c12">[${m.code}]</span>` : ''}</span>
+      <div class="rounding-btns">
+        <button class="rbtn ${isPort ? 'active-port' : ''}" onclick="setRounding('${m.id}','port')">P</button>
+        <button class="rbtn ${isStbd ? 'active-stbd' : ''}" onclick="setRounding('${m.id}','starboard')">S</button>
+        <button class="rbtn ${isNone ? 'active-none' : ''}" onclick="setRounding('${m.id}','none')">—</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('rounding-list').innerHTML = html;
+}
+
+function setRounding(id, val) {
+  roundingOverrides[id] = val;
+  localStorage.setItem('isc_rounding', JSON.stringify(roundingOverrides));
+  buildRoundingEditor();
+}
+
+function copyRoundingData() {
+  const lines = MARKS.map(m => {
+    const r = effectiveRounding(m);
+    const val = r === 'Leave to port' ? 'Leave to port'
+              : r === 'Leave to starboard' ? 'Leave to starboard'
+              : 'As per sailing instructions';
+    return `  { id:"${m.id}", rounding:"${val}" },`;
+  }).join('\n');
+  navigator.clipboard.writeText(lines).then(() => {
+    const btn = document.querySelector('#cal-rounding .cal-copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy rounding data', 2000);
+  });
+}
 
 function enterCalibrateMode() {
   const marks = MARKS; // only built-in marks, not custom
