@@ -58,10 +58,7 @@
     }
     #map.quiz-locate { cursor: crosshair; }
 
-    /* Hard mode: blur the chart image to make all text illegible */
-    #map.hard-mode .leaflet-image-layer {
-      filter: blur(2px) brightness(0.8);
-    }
+    /* Hard mode: handled by swapping to the pre-blurred chart image */
 
 
     /* Difficulty toggle in header */
@@ -971,7 +968,7 @@ const map = L.map('map', {
   zoomControl: true
 });
 
-L.imageOverlay('isc-chart.png', imgBounds, {
+const chartOverlay = L.imageOverlay('isc-chart.png', imgBounds, {
   attribution: '© Itchenor Sailing Club — Course Card Alpha 2025–2028'
 }).addTo(map);
 
@@ -1113,10 +1110,18 @@ function buildMarkList() {
 // phase 'name'  — show code badge, pick the mark name from multiple choice
 // phase 'locate' — find the mark on the chart by clicking
 
-const ROUND_SIZE = 2;
+// Each coded+locatable mark = 2 base pts, coded noLocate or uncoded = 1 base pt.
+// Round ends when accumulated possible base points reaches TARGET_PTS.
+const TARGET_PTS = 20;
+
+function markBasePts(mark) {
+  const hasCode = mark.code && mark.code !== '★';
+  return (hasCode && !mark.noLocate) ? 2 : 1;
+}
 
 function startQuiz() {
-  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', marksAnswered: 0 };
+  const maxScore = TARGET_PTS * (difficulty === 'hard' ? 2 : 1);
+  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', possiblePts: 0, maxScore };
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   if (difficulty === 'hard') {
     document.getElementById('diff-easy').disabled = true;
@@ -1129,7 +1134,7 @@ function startQuiz() {
 }
 
 function nextQuestion() {
-  if (quiz.marksAnswered >= ROUND_SIZE) {
+  if (quiz.possiblePts >= TARGET_PTS) {
     showRoundEnd();
     return;
   }
@@ -1138,8 +1143,9 @@ function nextQuestion() {
   if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
   quiz.current = quiz.queue.pop();
   quiz.answered = false;
+  quiz.possiblePts += markBasePts(quiz.current);
 
-  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered + 1}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
   document.getElementById('quiz-feedback').textContent = '';
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.classList.remove('visible');
@@ -1148,7 +1154,6 @@ function nextQuestion() {
 
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
 
-  // Coded marks (A-Z, 0-9) get the symbol → name step first; uncoded go straight to locate
   const hasCode = quiz.current.code && quiz.current.code !== '★';
   if (hasCode) {
     quiz.phase = 'name';
@@ -1169,13 +1174,13 @@ function showRoundEnd() {
   const easyBtn = document.getElementById('diff-easy');
   easyBtn.disabled = false; easyBtn.style.opacity = ''; easyBtn.title = '';
 
-  const pct = quiz.total > 0 ? Math.round((quiz.score / quiz.total) * 100) : 0;
+  const pct = quiz.maxScore > 0 ? Math.round((quiz.score / quiz.maxScore) * 100) : 0;
   const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
-  const modeLabel = difficulty === 'hard' ? '🔥 Hard mode — double points' : `${ROUND_SIZE} marks`;
+  const modeLabel = difficulty === 'hard' ? '🔥 Hard mode — double points' : `${TARGET_PTS} pt round`;
   const gradeClass = pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong';
 
   document.getElementById('end-label').textContent = `Round complete — ${modeLabel}`;
-  document.getElementById('end-score').textContent = `${quiz.score} / ${quiz.total}`;
+  document.getElementById('end-score').textContent = `${quiz.score} / ${quiz.maxScore}`;
   document.getElementById('end-pct').textContent   = `${pct}% correct`;
   document.getElementById('end-grade').textContent = grade;
   document.getElementById('end-grade').className   = `round-grade ${gradeClass}`;
@@ -1227,7 +1232,7 @@ function handleSymbolAnswer(answer) {
   fb.textContent = correct
     ? '✓ Correct! Now find it on the map.'
     : `✗ That was ${quiz.current.name}. Now find it on the map.`;
-  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered + 1}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
 
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.textContent = quiz.current.noLocate ? 'Next →' : 'Find it on the map →';
@@ -1237,7 +1242,6 @@ function handleSymbolAnswer(answer) {
 
 function transitionToLocate() {
   if (quiz.current.noLocate) {
-    quiz.marksAnswered++;
     nextQuestion();
     return;
   }
@@ -1292,11 +1296,9 @@ function handleLocateClick(correct) {
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
   fb.textContent = correct ? '✓ Correct!' : `✗ Wrong — the circle shows where it is.`;
 
-  quiz.marksAnswered++;
-  const remaining = ROUND_SIZE - quiz.marksAnswered;
-  document.getElementById('quiz-score').textContent = `Q${quiz.marksAnswered}/${ROUND_SIZE}  •  Score: ${quiz.score} / ${quiz.total}`;
+  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
   const nextBtn = document.getElementById('quiz-next');
-  nextBtn.textContent = remaining > 0 ? 'Next →' : 'See results →';
+  nextBtn.textContent = quiz.possiblePts >= TARGET_PTS ? 'See results →' : 'Next →';
   nextBtn.classList.add('visible');
 }
 
@@ -1557,7 +1559,7 @@ function setDifficulty(d) {
   difficulty = d;
   document.getElementById('diff-easy').classList.toggle('active', d === 'easy');
   document.getElementById('diff-hard').classList.toggle('active', d === 'hard');
-  map.getContainer().classList.toggle('hard-mode', d === 'hard');
+  chartOverlay.setUrl(d === 'hard' ? 'isc-chart-hard.png' : 'isc-chart.png');
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
