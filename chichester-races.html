@@ -1183,7 +1183,7 @@ function markBasePts(mark) {
 
 // ─── Learn mode — spaced repetition ──────────────────────────────────────────
 let quizMode = 'round'; // 'round' | 'learn'
-let markMastery = {};   // id → 0-10, starts at 5 (unknown)
+let markMastery = JSON.parse(localStorage.getItem('isc_mastery') || '{}');
 
 function getMastery(id) {
   if (markMastery[id] === undefined) markMastery[id] = 5;
@@ -1194,6 +1194,7 @@ function updateMastery(id, correct) {
   markMastery[id] = correct
     ? Math.min(10, getMastery(id) + 1)
     : Math.max(0,  getMastery(id) - 2);
+  localStorage.setItem('isc_mastery', JSON.stringify(markMastery));
 }
 
 function markWeight(id) {
