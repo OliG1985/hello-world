@@ -61,26 +61,44 @@
     /* Hard mode: handled by swapping to the pre-blurred chart image */
 
 
-    /* Difficulty toggle in header */
-    .diff-toggle {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 0.72rem;
-      color: #8ea8cc;
-      margin-left: 8px;
+    /* Difficulty picker (shown at quiz start) */
+    #quiz-difficulty {
+      padding: 16px 12px;
+      display: none;
     }
-    .diff-btn {
-      padding: 5px 10px;
-      border-radius: 20px;
-      border: 1px solid #1e4080;
-      background: transparent;
-      color: #8ea8cc;
-      font-size: 0.72rem;
+    #quiz-difficulty h3 {
+      text-align: center;
+      color: #7eb8f7;
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+    .diff-choice {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 2px solid #1e4080;
+      background: #0d1f3c;
+      color: #c5d8f0;
       cursor: pointer;
-      white-space: nowrap;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
     }
-    .diff-btn.active { background: #6a2000; color: #ffb07a; border-color: #cc5500; }
+    .diff-choice:hover { border-color: #7eb8f7; background: #152d54; }
+    .diff-choice .diff-choice-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #7eb8f7;
+      margin-bottom: 4px;
+    }
+    .diff-choice.hard .diff-choice-title { color: #ffb07a; }
+    .diff-choice.hard { border-color: #6a2000; }
+    .diff-choice.hard:hover { border-color: #ffb07a; background: #2a1200; }
+    .diff-choice .diff-choice-desc {
+      font-size: 0.75rem;
+      color: #8ea8cc;
+      line-height: 1.4;
+    }
 
     /* ── Panel ── */
     #panel {
@@ -530,10 +548,6 @@
     <button class="mode-btn"        id="btn-quiz"      onclick="setMode('quiz')">Quiz</button>
     <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')">⚙ Calibrate</button>
   </div>
-  <div class="diff-toggle">
-    <button class="diff-btn active" id="diff-easy" onclick="setDifficulty('easy')">Easy</button>
-    <button class="diff-btn"        id="diff-hard" onclick="setDifficulty('hard')">Hard</button>
-  </div>
 </header>
 
 <div class="layout">
@@ -543,10 +557,9 @@
     <button id="panel-toggle" onclick="togglePanel()" title="Collapse/expand panel">◀</button>
 
     <div class="panel-inner">
-      <div class="panel-tabs">
+      <div class="panel-tabs" id="panel-tabs">
         <button class="panel-tab active" data-tab="info">Info</button>
         <button class="panel-tab"        data-tab="list">Marks</button>
-        <button class="panel-tab"        data-tab="quiz">Quiz</button>
       </div>
 
       <div class="panel-body" id="tab-info">
@@ -554,7 +567,18 @@
       </div>
       <div class="panel-body" id="tab-list"  style="display:none"></div>
       <div class="panel-body" id="tab-quiz"  style="display:none">
-        <div id="quiz-ui">
+        <div id="quiz-difficulty">
+          <h3>Choose difficulty</h3>
+          <button class="diff-choice" onclick="chooseDifficulty('easy')">
+            <div class="diff-choice-title">Easy</div>
+            <div class="diff-choice-desc">Chart labels are visible. 1 point per correct answer.</div>
+          </button>
+          <button class="diff-choice hard" onclick="chooseDifficulty('hard')">
+            <div class="diff-choice-title">Hard 🔥</div>
+            <div class="diff-choice-desc">Chart text is blurred — no peeking! Double points for every correct answer.</div>
+          </button>
+        </div>
+        <div id="quiz-ui" style="display:none">
           <div class="quiz-panel">
             <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
             <div class="quiz-prompt"  id="quiz-question"></div>
@@ -570,7 +594,7 @@
             <div class="round-score-big"   id="end-score"></div>
             <div class="round-score-label" id="end-pct"></div>
             <div class="round-grade"       id="end-grade"></div>
-            <button class="round-play-again" onclick="startQuiz()">Play again</button>
+            <button class="round-play-again" onclick="showDifficultyPicker()">Play again</button>
           </div>
         </div>
       </div>
@@ -1124,15 +1148,25 @@ function markBasePts(mark) {
   return (hasCode && !mark.noLocate) ? 2 : 1;
 }
 
+function showDifficultyPicker() {
+  chartOverlay.setUrl('isc-chart.png');
+  document.getElementById('quiz-difficulty').style.display = 'block';
+  document.getElementById('quiz-ui').style.display         = 'none';
+  document.getElementById('quiz-end').style.display        = 'none';
+}
+
+function chooseDifficulty(d) {
+  difficulty = d;
+  chartOverlay.setUrl(d === 'hard' ? 'isc-chart-hard.png' : 'isc-chart.png');
+  document.getElementById('quiz-difficulty').style.display = 'none';
+  document.getElementById('quiz-ui').style.display         = 'block';
+  startQuiz();
+}
+
 function startQuiz() {
   const maxScore = TARGET_PTS * (difficulty === 'hard' ? 2 : 1);
   quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', possiblePts: 0, maxScore };
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
-  if (difficulty === 'hard') {
-    document.getElementById('diff-easy').disabled = true;
-    document.getElementById('diff-easy').style.opacity = '0.35';
-    document.getElementById('diff-easy').title = 'Cannot switch to Easy mid-round';
-  }
   document.getElementById('quiz-ui').style.display  = 'block';
   document.getElementById('quiz-end').style.display = 'none';
   nextQuestion();
@@ -1175,9 +1209,6 @@ function showRoundEnd() {
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   selectedMark = null;
   placeMarkers();
-
-  const easyBtn = document.getElementById('diff-easy');
-  easyBtn.disabled = false; easyBtn.style.opacity = ''; easyBtn.title = '';
 
   const pct = quiz.maxScore > 0 ? Math.round((quiz.score / quiz.maxScore) * 100) : 0;
   const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
@@ -1473,18 +1504,16 @@ function setMode(m) {
   document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
   selectedMark = null;
 
-  if (m !== 'quiz') {
-    const easyBtn = document.getElementById('diff-easy');
-    easyBtn.disabled = false; easyBtn.style.opacity = ''; easyBtn.title = '';
-  }
-
   if (m === 'calibrate') {
     enterCalibrateMode();
   } else if (m === 'quiz') {
+    document.getElementById('panel-tabs').style.display = 'none';
     placeMarkers();
     switchTab('quiz');
-    startQuiz();
+    showDifficultyPicker();
   } else {
+    document.getElementById('panel-tabs').style.display = '';
+    chartOverlay.setUrl('isc-chart.png');
     placeMarkers();
     clearSelection();
   }
@@ -1560,12 +1589,6 @@ allMarks().forEach(m => window.MARK_MAP[m.id] = m);
 
 // ─── Difficulty ───────────────────────────────────────────────────────────────
 let difficulty = 'easy';
-function setDifficulty(d) {
-  difficulty = d;
-  document.getElementById('diff-easy').classList.toggle('active', d === 'easy');
-  document.getElementById('diff-hard').classList.toggle('active', d === 'hard');
-  chartOverlay.setUrl(d === 'hard' ? 'isc-chart-hard.png' : 'isc-chart.png');
-}
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 function shuffle(arr) {
