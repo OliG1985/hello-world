@@ -1042,8 +1042,11 @@ function placeMarkers() {
       } else if (mode === 'quiz' && quiz.phase === 'locate' && !quiz.answered) {
         L.DomEvent.stopPropagation(e);
         handleLocateClick(mark.id === quiz.current.id);
+      } else if (mode === 'quiz') {
+        L.DomEvent.stopPropagation(e);
       }
     });
+    m.on('tooltipopen', () => { if (mode === 'quiz') m.closeTooltip(); });
     leafletMarkers[mark.id] = m;
   });
 }
