@@ -624,7 +624,7 @@
   <div class="mode-btns">
     <button class="mode-btn active" id="btn-explore"   onclick="setMode('explore')">Explore</button>
     <button class="mode-btn"        id="btn-quiz"      onclick="setMode('quiz')">Quiz</button>
-    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')" style="display:none">⚙ Calibrate</button>
+    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')">⚙ Calibrate</button>
   </div>
 </header>
 
@@ -803,6 +803,11 @@ const MARKS = [
     pos: px(320, 1148), color:"#00BB44", badgeClass:"badge-green",
     type:"Starboard lateral", rounding:"As per sailing instructions",
     notes:"Green conical buoy north of Pilsey Island. Key windward mark.", club:"ISC / HISC" },
+
+  { id:"pilsey_beacon", code:"",     name:"Pilsey Beacon",
+    pos: px(400, 1200), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Beacon", rounding:"As per sailing instructions",
+    notes:"Pilsey Island beacon.", club:"ISC / HISC" },
 
   { id:"nw_pilsey",     code:"",     name:"NW Pilsey",
     pos: px(368, 1261), color:"#FF3300", badgeClass:"badge-red",
