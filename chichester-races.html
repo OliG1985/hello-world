@@ -1587,7 +1587,8 @@ let calIndex      = 0;
 let calMarkerTemp = null; // temporary marker for the current step
 
 // ─── Rounding editor ─────────────────────────────────────────────────────────
-let roundingOverrides = JSON.parse(localStorage.getItem('isc_rounding') || '{}');
+localStorage.removeItem('isc_rounding'); // clear any stale overrides
+let roundingOverrides = {};
 
 function effectiveRounding(mark) {
   const ov = roundingOverrides[mark.id];
@@ -1627,7 +1628,6 @@ function buildRoundingEditor() {
 
 function setRounding(id, val) {
   roundingOverrides[id] = val;
-  localStorage.setItem('isc_rounding', JSON.stringify(roundingOverrides));
   buildRoundingEditor();
 }
 
