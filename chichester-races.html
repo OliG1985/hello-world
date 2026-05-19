@@ -94,10 +94,30 @@
     .diff-choice.hard .diff-choice-title { color: #ffb07a; }
     .diff-choice.hard { border-color: #6a2000; }
     .diff-choice.hard:hover { border-color: #ffb07a; background: #2a1200; }
+    .diff-choice.learn .diff-choice-title { color: #7ed9a8; }
+    .diff-choice.learn { border-color: #0d4a2a; }
+    .diff-choice.learn:hover { border-color: #7ed9a8; background: #071f12; }
     .diff-choice .diff-choice-desc {
       font-size: 0.75rem;
       color: #8ea8cc;
       line-height: 1.4;
+    }
+    /* Mastery bar shown in learn mode */
+    #mastery-bar-wrap {
+      display: none;
+      margin: 6px 0 10px;
+      text-align: center;
+    }
+    #mastery-bar-wrap.visible { display: block; }
+    #mastery-bar-label { font-size: 0.7rem; color: #7ed9a8; margin-bottom: 4px; }
+    #mastery-bar-track {
+      height: 6px; border-radius: 3px;
+      background: #0d2044; overflow: hidden;
+    }
+    #mastery-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, #1a7a47, #7ed9a8);
+      transition: width 0.4s;
     }
 
     /* ── Panel ── */
@@ -568,19 +588,27 @@
       <div class="panel-body" id="tab-list"  style="display:none"></div>
       <div class="panel-body" id="tab-quiz"  style="display:none">
         <div id="quiz-difficulty">
-          <h3>Choose difficulty</h3>
+          <h3>Choose mode</h3>
           <button class="diff-choice" onclick="chooseDifficulty('easy')">
             <div class="diff-choice-title">Easy</div>
-            <div class="diff-choice-desc">Chart labels are visible. 1 point per correct answer.</div>
+            <div class="diff-choice-desc">Chart labels visible. Scored round — 1 pt per correct answer.</div>
           </button>
           <button class="diff-choice hard" onclick="chooseDifficulty('hard')">
             <div class="diff-choice-title">Hard 🔥</div>
-            <div class="diff-choice-desc">Chart text is blurred — no peeking! Double points for every correct answer.</div>
+            <div class="diff-choice-desc">Chart text blurred — no peeking! Scored round — double points.</div>
+          </button>
+          <button class="diff-choice learn" onclick="chooseLearning()">
+            <div class="diff-choice-title">Learn 📚</div>
+            <div class="diff-choice-desc">Infinite questions. Marks you get wrong come up more often. Tracks your overall mastery %.</div>
           </button>
         </div>
         <div id="quiz-ui" style="display:none">
           <div class="quiz-panel">
             <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
+            <div id="mastery-bar-wrap">
+              <div id="mastery-bar-label">Overall mastery: 50%</div>
+              <div id="mastery-bar-track"><div id="mastery-bar-fill" style="width:50%"></div></div>
+            </div>
             <div class="quiz-prompt"  id="quiz-question"></div>
             <div class="quiz-target"  id="quiz-target"  style="display:none"></div>
             <div class="quiz-options" id="quiz-options"></div>
@@ -1046,7 +1074,9 @@ function placeMarkers() {
         L.DomEvent.stopPropagation(e);
       }
     });
-    m.on('tooltipopen', () => { if (mode === 'quiz') m.closeTooltip(); });
+    m.on('tooltipopen', () => {
+      if (mode === 'quiz' && !(quiz.phase === 'locate' && quiz.answered)) m.closeTooltip();
+    });
     leafletMarkers[mark.id] = m;
   });
 }
@@ -1151,6 +1181,59 @@ function markBasePts(mark) {
   return (hasCode && !mark.noLocate) ? 2 : 1;
 }
 
+// ─── Learn mode — spaced repetition ──────────────────────────────────────────
+let quizMode = 'round'; // 'round' | 'learn'
+let markMastery = {};   // id → 0-10, starts at 5 (unknown)
+
+function getMastery(id) {
+  if (markMastery[id] === undefined) markMastery[id] = 5;
+  return markMastery[id];
+}
+
+function updateMastery(id, correct) {
+  markMastery[id] = correct
+    ? Math.min(10, getMastery(id) + 1)
+    : Math.max(0,  getMastery(id) - 2);
+}
+
+function markWeight(id) {
+  // Higher mastery → lower weight → seen less often. Min weight 0.2.
+  return Math.max(0.2, 10.5 - getMastery(id));
+}
+
+function pickWeightedMark() {
+  const marks = allMarks();
+  const weights = marks.map(m => markWeight(m.id));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < marks.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return marks[i];
+  }
+  return marks[marks.length - 1];
+}
+
+function overallMastery() {
+  const marks = allMarks();
+  const sum = marks.reduce((acc, m) => acc + getMastery(m.id), 0);
+  return Math.round((sum / (marks.length * 10)) * 100);
+}
+
+function updateMasteryDisplay() {
+  const pct = overallMastery();
+  document.getElementById('mastery-bar-label').textContent = `Overall mastery: ${pct}%`;
+  document.getElementById('mastery-bar-fill').style.width = pct + '%';
+}
+
+function updateScoreDisplay() {
+  if (quizMode === 'learn') {
+    document.getElementById('quiz-score').textContent = `Question ${quiz.total + 1}`;
+    updateMasteryDisplay();
+  } else {
+    document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
+  }
+}
+
 function showDifficultyPicker() {
   chartOverlay.setUrl('isc-chart.png');
   document.getElementById('quiz-difficulty').style.display = 'block';
@@ -1159,8 +1242,21 @@ function showDifficultyPicker() {
 }
 
 function chooseDifficulty(d) {
+  quizMode = 'round';
   difficulty = d;
   chartOverlay.setUrl(d === 'hard' ? 'isc-chart-hard.png' : 'isc-chart.png');
+  document.getElementById('mastery-bar-wrap').classList.remove('visible');
+  document.getElementById('quiz-difficulty').style.display = 'none';
+  document.getElementById('quiz-ui').style.display         = 'block';
+  startQuiz();
+}
+
+function chooseLearning() {
+  quizMode = 'learn';
+  difficulty = 'easy';
+  chartOverlay.setUrl('isc-chart.png');
+  document.getElementById('mastery-bar-wrap').classList.add('visible');
+  updateMasteryDisplay();
   document.getElementById('quiz-difficulty').style.display = 'none';
   document.getElementById('quiz-ui').style.display         = 'block';
   startQuiz();
@@ -1172,22 +1268,27 @@ function startQuiz() {
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   document.getElementById('quiz-ui').style.display  = 'block';
   document.getElementById('quiz-end').style.display = 'none';
+  updateScoreDisplay();
   nextQuestion();
 }
 
 function nextQuestion() {
-  if (quiz.possiblePts >= TARGET_PTS) {
+  if (quizMode === 'round' && quiz.possiblePts >= TARGET_PTS) {
     showRoundEnd();
     return;
   }
 
   const marks = allMarks();
-  if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
-  quiz.current = quiz.queue.pop();
+  if (quizMode === 'learn') {
+    quiz.current = pickWeightedMark();
+  } else {
+    if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
+    quiz.current = quiz.queue.pop();
+    quiz.possiblePts += markBasePts(quiz.current);
+  }
   quiz.answered = false;
-  quiz.possiblePts += markBasePts(quiz.current);
 
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
+  updateScoreDisplay();
   document.getElementById('quiz-feedback').textContent = '';
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.classList.remove('visible');
@@ -1254,11 +1355,13 @@ function runSymbolQuestion() {
 function handleSymbolAnswer(answer) {
   if (quiz.answered || quiz.phase !== 'name') return;
   quiz.answered = true;
-  const pts = difficulty === 'hard' ? 2 : 1;
-  quiz.total += pts;
+  quiz.total += 1;
 
   const correct = answer === quiz.current.name;
-  if (correct) quiz.score += pts;
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
 
   document.querySelectorAll('.qbtn').forEach(btn => {
     btn.disabled = true;
@@ -1266,12 +1369,14 @@ function handleSymbolAnswer(answer) {
     else if (btn.textContent === answer && !correct) btn.classList.add('wrong');
   });
 
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
   fb.textContent = correct
     ? '✓ Correct! Now find it on the map.'
     : `✗ That was ${quiz.current.name}. Now find it on the map.`;
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
+  updateScoreDisplay();
 
   const nextBtn = document.getElementById('quiz-next');
   nextBtn.textContent = quiz.current.noLocate ? 'Next →' : 'Find it on the map →';
@@ -1313,11 +1418,13 @@ function runLocateQuestion() {
 function handleLocateClick(correct) {
   if (quiz.answered || quiz.phase !== 'locate') return;
   quiz.answered = true;
-  const pts = difficulty === 'hard' ? 2 : 1;
-  quiz.total += pts;
+  quiz.total += 1;
   map.getContainer().classList.remove('quiz-locate');
 
-  if (correct) quiz.score += pts;
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
 
   const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
   if (locateCircle) map.removeLayer(locateCircle);
@@ -1331,13 +1438,16 @@ function handleLocateClick(correct) {
   map.panTo(target);
   if (leafletMarkers[quiz.current.id]) leafletMarkers[quiz.current.id].openTooltip();
 
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
   fb.textContent = correct ? '✓ Correct!' : `✗ Wrong — the circle shows where it is.`;
 
-  document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
+  updateScoreDisplay();
   const nextBtn = document.getElementById('quiz-next');
-  nextBtn.textContent = quiz.possiblePts >= TARGET_PTS ? 'See results →' : 'Next →';
+  const isLastRoundQ = quizMode === 'round' && quiz.possiblePts >= TARGET_PTS;
+  nextBtn.textContent = isLastRoundQ ? 'See results →' : 'Next →';
   nextBtn.classList.add('visible');
 }
 
