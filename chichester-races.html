@@ -767,12 +767,12 @@ const MARKS = [
 
   { id:"n_pilsey",      code:"",     name:"N Pilsey",
     pos: px(320, 1148), color:"#00BB44", badgeClass:"badge-green",
-    type:"Starboard lateral", rounding:"Leave to starboard",
+    type:"Starboard lateral", rounding:"As per sailing instructions",
     notes:"Green conical buoy north of Pilsey Island. Key windward mark.", club:"ISC / HISC" },
 
   { id:"nw_pilsey",     code:"",     name:"NW Pilsey",
     pos: px(368, 1261), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral", rounding:"Leave to port",
+    type:"Port lateral", rounding:"As per sailing instructions",
     notes:"NW of Pilsey Island. Used in longer harbour courses.", club:"ISC / HISC" },
 
   { id:"sw_pilsey_3",   code:"3",    name:"SW Pilsey",
@@ -782,12 +782,12 @@ const MARKS = [
 
   { id:"fishery",       code:"",     name:"Fishery",
     pos: px(398, 1329), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral", rounding:"Leave to port",
+    type:"Port lateral", rounding:"As per sailing instructions",
     notes:"Fishery area on the Hayling/Pilsey approaches.", club:"HISC" },
 
   { id:"runway",        code:"✈️",   name:"Runway",
     pos: px(731, 1195), color:"#FF9900", badgeClass:"badge-orange",
-    type:"Race mark", rounding:"As per sailing instructions",
+    type:"Race mark", rounding:"Leave to starboard",
     notes:"Named after Hayling Island airfield. Used in outer harbour courses.", club:"ISC / HISC" },
 
   // ── Thorney Channel ──────────────────────────────────────────
@@ -869,12 +869,12 @@ const MARKS = [
   // ── Chichester Channel ───────────────────────────────────────
   { id:"stocker",       code:"",     name:"Stocker",
     pos: px(701, 1322), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral", rounding:"Leave to port going north",
+    type:"Port lateral", rounding:"As per sailing instructions",
     notes:"Red can buoy Fl(3)R.10s on Stocker Sands. Key channel reference mark.", club:"ISC / CYC" },
 
   { id:"goal_posts",    code:"",     name:"The Goal Posts",
     pos: px(1206, 850), color:"#FF9900", badgeClass:"badge-orange",
-    type:"Gate", rounding:"Pass between them as directed",
+    type:"Gate", rounding:"As per sailing instructions",
     notes:"Two marks forming a gate in the Chichester Channel off Itchenor.", club:"ISC" },
 
   { id:"creek_post",    code:"",     name:"Creek Post",
@@ -889,12 +889,12 @@ const MARKS = [
 
   { id:"club_line_c",   code:"C",    name:"Club Line Finish",
     pos: px(2283, 679), color:"#FFFFFF", badgeClass:"badge-white",
-    type:"Finish line", rounding:"Cross between committee boat and Itchenor mark",
+    type:"Finish line", rounding:"As per sailing instructions",
     notes:"Standard ISC finish line off the club.", club:"ISC" },
 
   { id:"gallon_line_f", code:"F",    name:"Gallon Line Post",
     pos: px(1933, 547), color:"#FFFFFF", badgeClass:"badge-white",
-    type:"Finish line", rounding:"Cross between committee boat and gallon post",
+    type:"Finish line", rounding:"As per sailing instructions",
     notes:"Alternative finish line. The Gallon Line Post is fixed on the Itchenor shore.", club:"ISC" },
 
   { id:"rookwood_q",    code:"R",    name:"Rookwood",
@@ -914,18 +914,18 @@ const MARKS = [
 
   { id:"fairway",       code:"",     name:"Fairway",
     pos: px(2045, 598), color:"#FFFFFF", badgeClass:"badge-white",
-    type:"Safe water", rounding:"Pass on either side",
+    type:"Safe water", rounding:"As per sailing instructions",
     notes:"Safe water mark in the upper channel near Itchenor.", club:"General" },
 
   { id:"cobner_p",      code:"P",    name:"Cobner",
     pos: px(2074, 283), color:"#00BB44", badgeClass:"badge-green",
-    type:"Starboard (S)", rounding:"Leave to starboard",
+    type:"Starboard (S)", rounding:"Leave to port",
     notes:"Far upper Chichester Channel toward Dell Quay. Longest harbour courses.", club:"ISC / CYC" },
 
   // ── Bosham / Upper harbour ────────────────────────────────────
   { id:"roman_transit", code:"",     name:"Roman Transit",
     pos: px(1672, 600), color:"#FFFF00", badgeClass:"badge-yellow",
-    type:"Transit mark", rounding:"Transit reference only",
+    type:"Transit mark", rounding:"As per sailing instructions",
     notes:"A leading/transit mark. Line it up for a precise position line.", club:"ISC" },
 
   { id:"chalkdock_t",   code:"",     name:"Chalkdock",
@@ -987,37 +987,37 @@ const MARKS = [
 
   { id:"west_winner",   code:"",     name:"West Winner",
     pos: px(506, 1487), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral / race mark", rounding:"Leave to port",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
     notes:"West extremity of the Winner Bank.", club:"ISC / HISC" },
 
   { id:"nw_winner",     code:"",     name:"NW Winner",
     pos: px(506, 1487), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral / race mark", rounding:"Leave to port",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
     notes:"NW extremity of the Winner Bank. Windward or gybe mark.", club:"ISC / HISC" },
 
   { id:"north_winner",  code:"",     name:"North Winner",
     pos: px(551, 1392), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral", rounding:"Leave to port",
+    type:"Port lateral", rounding:"As per sailing instructions",
     notes:"Northern side of the Winner Bank.", club:"ISC / HISC" },
 
   { id:"mid_winner",    code:"",     name:"Mid Winner",
     pos: px(634, 1366), color:"#FF3300", badgeClass:"badge-red",
-    type:"Port lateral / race mark", rounding:"Leave to port",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
     notes:"Mid-point of the Winner Bank. Gybe mark in windward-leeward courses.", club:"ISC / HISC" },
 
   { id:"sandhead_n",    code:"N",    name:"North of Sandhead and Copyhold",
     noLocate: true,      color:"#FF9900", badgeClass:"badge-orange",
-    type:"Course instruction", rounding:"Pass north of both Sandhead and Copyhold",
+    type:"Course instruction", rounding:"As per sailing instructions",
     notes:"Course N: pass north of both Sandhead and Copyhold marks.", club:"ISC / HISC" },
 
   { id:"sandhead",      code:"",     name:"Sandhead",
     pos: px(1207, 1200),color:"#FF9900", badgeClass:"badge-orange",
-    type:"Race mark", rounding:"Pass to the north",
+    type:"Race mark", rounding:"As per sailing instructions",
     notes:"Sandhead shoal mark. Course N passes north of this.", club:"ISC / HISC" },
 
   { id:"copyhold",      code:"",     name:"Copyhold",
     pos: px(927, 1291),color:"#FF9900", badgeClass:"badge-orange",
-    type:"Race mark", rounding:"Pass to the north",
+    type:"Race mark", rounding:"As per sailing instructions",
     notes:"Copyhold mark. Course N passes north of this.", club:"ISC / HISC" },
 
   { id:"dunes_o",       code:"0",    name:"Dunes",
@@ -1048,7 +1048,7 @@ const MARKS = [
 
   { id:"beach_zone",    code:"☀️",   name:"Beach",
     pos: px(770, 1626), color:"#FFDD00", badgeClass:"badge-yellow",
-    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    type:"Zone mark (inflatable)", rounding:"Leave to port",
     notes:"Inflatable zone mark off Hayling Island beach. Position set on the day.", club:"ISC / HISC" },
 
   { id:"spit_zone",     code:"❄️",   name:"Spit",
