@@ -600,7 +600,7 @@
   <div class="mode-btns">
     <button class="mode-btn active" id="btn-explore"   onclick="setMode('explore')">Explore</button>
     <button class="mode-btn"        id="btn-quiz"      onclick="setMode('quiz')">Quiz</button>
-    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')">⚙ Calibrate</button>
+    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')" style="display:none">⚙ Calibrate</button>
   </div>
 </header>
 
@@ -1176,7 +1176,7 @@ function selectMark(mark) {
     <span class="mark-badge ${mark.badgeClass || 'badge-yellow'}">${mark.type}</span>
     <div class="detail-row">
       <span class="detail-label">Rounding</span>
-      <span class="detail-value">${mark.rounding || '—'}</span>
+      <span class="detail-value">${effectiveRounding(mark) || '—'}</span>
     </div>
     <div class="detail-row">
       <span class="detail-label">Club</span>
