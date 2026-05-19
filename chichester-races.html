@@ -583,6 +583,14 @@
       font-weight: 600; cursor: pointer;
     }
     .cal-tab.active { color: #ffb07a; border-bottom-color: #ffb07a; }
+    #cal-positions { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    .cal-pos-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 2px; border-bottom: 1px solid #2a1800;
+      font-size: 0.73rem; cursor: pointer; color: #c8a070;
+    }
+    .cal-pos-item:hover { color: #ffe0b0; }
+    .cal-pos-item.active { color: #f39c12; background: #2a1400; padding: 5px 6px; border-radius: 4px; }
     #cal-rounding { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
     #cal-rounding.visible { display: flex; }
     .rounding-list {
@@ -741,26 +749,13 @@
       <button class="cal-tab"        onclick="switchCalTab('rounding')">🔄 Rounding</button>
     </div>
     <div id="cal-positions">
-    <div class="cal-header">
-      <div class="cal-progress-bar"><div class="cal-progress-fill" id="cal-progress-fill"></div></div>
-      <div class="cal-step"    id="cal-step">Mark 1 of 0</div>
-      <div class="cal-mark-name" id="cal-mark-name">—</div>
-      <div class="cal-mark-type" id="cal-mark-type">—</div>
-    </div>
-    <div class="cal-instruction">
-      Click the chart on the <strong id="cal-inst-name">—</strong> symbol to place this mark.
-    </div>
-    <div class="cal-placed" id="cal-placed"></div>
-    <div class="cal-actions">
-      <button class="cal-btn" id="cal-back-btn"  onclick="calStep(-1)">← Back</button>
-      <button class="cal-btn" id="cal-skip-btn"  onclick="calStep(1)">Skip →</button>
-      <button class="cal-btn primary" id="cal-next-btn" onclick="calStep(1)" disabled>Next →</button>
-    </div>
-    <div class="cal-copy-section" id="cal-copy-section">
-      <p style="font-size:0.74rem;color:#b07040;margin-bottom:8px">All done! Copy the coordinates and send them.</p>
-      <button class="cal-copy-btn" onclick="copyCalibration()">📋 Copy corrected coordinates</button>
-    </div>
-    <div class="cal-skip-list" id="cal-skip-list"></div>
+      <div style="padding:8px 10px;flex-shrink:0;border-bottom:1px solid #3a2000">
+        <button class="cal-copy-btn" id="cal-pos-copy-btn" style="width:100%" onclick="copyCalibration()">📋 Copy position data</button>
+      </div>
+      <div id="cal-active-bar" style="display:none;padding:6px 10px;font-size:0.72rem;color:#f39c12;background:#2a1400;border-bottom:1px solid #3a2000;flex-shrink:0">
+        Click chart to place <strong id="cal-active-name">—</strong>
+      </div>
+      <div id="cal-pos-list" style="flex:1;overflow-y:auto;min-height:0;padding:8px 10px"></div>
     </div><!-- end #cal-positions -->
     <div id="cal-rounding">
       <div style="padding:8px 10px;flex-shrink:0;border-bottom:1px solid #3a2000">
@@ -1640,10 +1635,10 @@ function handleLocateClick(correct) {
   nextBtn.classList.add('visible');
 }
 
-// ─── Calibration wizard ───────────────────────────────────────────────────────
-let calPositions  = {};   // id → [lat, lng] in CRS.Simple pixel space
-let calIndex      = 0;
-let calMarkerTemp = null; // temporary marker for the current step
+// ─── Calibration ─────────────────────────────────────────────────────────────
+let calPositions  = {};
+let calActiveId   = null;
+let calMarkerTemp = null;
 
 // ─── Rounding editor ─────────────────────────────────────────────────────────
 localStorage.removeItem('isc_rounding'); // clear any stale overrides
@@ -1706,126 +1701,60 @@ function copyRoundingData() {
 }
 
 function enterCalibrateMode() {
-  const marks = MARKS; // only built-in marks, not custom
-  calIndex = 0;
-  // Seed with current positions so already-placed marks show correctly
-  marks.forEach(m => {
-    if (!calPositions[m.id]) calPositions[m.id] = (m.pos || [m.lat || 0, m.lng || 0]).slice();
+  MARKS.forEach(m => {
+    if (!calPositions[m.id]) calPositions[m.id] = (m.pos || [0, 0]).slice();
   });
-
-  // Hide normal panel, show cal panel
   document.getElementById('panel').style.display = 'none';
   document.getElementById('cal-panel').classList.add('visible');
-
-  // Show all existing placed marks faintly as reference
   placeMarkers();
-
-  calShowStep();
+  buildCalPosList();
   map.on('click', calHandleClick);
 }
 
-function calShowStep() {
-  const marks = MARKS;
-  const mark  = marks[calIndex];
-  const total = marks.length;
-  const done  = Object.keys(calPositions).filter(id => marks.find(m => m.id === id)).length;
+function buildCalPosList() {
+  const html = MARKS.map(m => {
+    const active = m.id === calActiveId;
+    const placed = !!calPositions[m.id];
+    return `<div class="cal-pos-item${active ? ' active' : ''}" onclick="selectCalMark('${m.id}')">
+      <span style="flex:1">${m.name}${m.code ? ` <span style="color:#f39c12">[${m.code}]</span>` : ''}</span>
+      ${placed ? '<span style="color:#7acc44;font-size:0.65rem">✓</span>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('cal-pos-list').innerHTML = html;
+}
 
-  // Progress bar
-  document.getElementById('cal-progress-fill').style.width = Math.round((calIndex / total) * 100) + '%';
-  document.getElementById('cal-step').textContent = `Mark ${calIndex + 1} of ${total}`;
-
-  if (!mark) {
-    // Finished
-    document.getElementById('cal-mark-name').textContent = 'All done!';
-    document.getElementById('cal-mark-type').textContent = '';
-    document.getElementById('cal-inst-name').textContent = '';
-    document.getElementById('cal-placed').textContent    = '';
-    document.getElementById('cal-next-btn').disabled     = true;
-    document.getElementById('cal-copy-section').classList.add('visible');
-    document.getElementById('cal-progress-fill').style.width = '100%';
-    document.getElementById('cal-step').textContent = `${total} marks placed`;
-    buildSkipList();
-    return;
-  }
-
-  const codeHtml = mark.code ? `<span class="cal-mark-code">${mark.code}</span>` : '';
-  document.getElementById('cal-mark-name').innerHTML = mark.name + codeHtml;
-  document.getElementById('cal-mark-type').textContent = mark.type;
-  document.getElementById('cal-inst-name').textContent = mark.name;
-  document.getElementById('cal-placed').textContent    = '';
-  document.getElementById('cal-next-btn').disabled     = true;
-  document.getElementById('cal-back-btn').disabled     = calIndex === 0;
-  document.getElementById('cal-copy-section').classList.remove('visible');
-
-  // Pan to current estimated position
-  const pos = calPositions[mark.id] || mark.pos;
-  map.panTo(pos);
-
-  // Highlight current marker on map
+function selectCalMark(id) {
+  calActiveId = id;
+  const mark = MARKS.find(m => m.id === id);
+  document.getElementById('cal-active-bar').style.display = '';
+  document.getElementById('cal-active-name').textContent = mark ? mark.name : id;
+  if (calPositions[id]) map.panTo(calPositions[id]);
   if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
-
-  // Show current mark position with a pulsing ring
-  calMarkerTemp = L.circleMarker(pos, {
-    radius: 16, color: '#f39c12', weight: 3,
-    fillOpacity: 0, dashArray: '5,5'
-  }).addTo(map);
-
-  buildSkipList();
+  if (calPositions[id]) {
+    calMarkerTemp = L.circleMarker(calPositions[id], {
+      radius: 16, color: '#f39c12', weight: 3, fillOpacity: 0, dashArray: '5,5'
+    }).addTo(map);
+  }
+  buildCalPosList();
 }
 
 function calHandleClick(e) {
-  const marks = MARKS;
-  const mark  = marks[calIndex];
-  if (!mark) return;
-
-  // Save position
-  calPositions[mark.id] = [e.latlng.lat, e.latlng.lng];
-
-  // Show confirmation dot
+  if (!calActiveId) return;
+  calPositions[calActiveId] = [e.latlng.lat, e.latlng.lng];
   if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
   calMarkerTemp = L.circleMarker([e.latlng.lat, e.latlng.lng], {
-    radius: 10, color: '#2ecc71', fillColor: '#2ecc71',
-    fillOpacity: 0.6, weight: 2
+    radius: 10, color: '#2ecc71', fillColor: '#2ecc71', fillOpacity: 0.6, weight: 2
   }).addTo(map);
-
-  document.getElementById('cal-placed').textContent = '✓ Placed — click Next to continue';
-  document.getElementById('cal-next-btn').disabled  = false;
-
-  // Update the main marker on the map
-  if (leafletMarkers[mark.id]) {
-    leafletMarkers[mark.id].setLatLng([e.latlng.lat, e.latlng.lng]);
+  if (leafletMarkers[calActiveId]) {
+    leafletMarkers[calActiveId].setLatLng([e.latlng.lat, e.latlng.lng]);
   }
-}
-
-function calStep(dir) {
-  if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
-  calIndex = Math.max(0, calIndex + dir);
-  calShowStep();
-}
-
-function buildSkipList() {
-  const marks = MARKS;
-  let html = '<p style="margin-bottom:6px;color:#806040;font-size:0.7rem">All marks — click to jump:</p>';
-  marks.forEach((m, i) => {
-    const placed = !!calPositions[m.id];
-    const active = i === calIndex;
-    html += `<div class="cal-skip-item ${placed ? 'done' : ''}" style="${active ? 'background:#2a1800' : ''}">
-      <span>${m.name}${m.code ? ` [${m.code}]` : ''}</span>
-      <button onclick="calJump(${i})">${active ? '▶' : placed ? '✓' : '→'}</button>
-    </div>`;
-  });
-  document.getElementById('cal-skip-list').innerHTML = html;
-}
-
-function calJump(i) {
-  if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
-  calIndex = i;
-  calShowStep();
+  buildCalPosList();
 }
 
 function exitCalibrateMode() {
   map.off('click', calHandleClick);
   if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
+  calActiveId = null;
   document.getElementById('panel').style.display = '';
   document.getElementById('cal-panel').classList.remove('visible');
 }
@@ -1837,16 +1766,14 @@ function copyCalibration() {
     const px_y = Math.round(IMG_H - pos[0]);
     return `  { id:"${mark.id}", pos: px(${px_x}, ${px_y}) },`;
   });
-  const text = lines.join('\n');
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.cal-copy-btn');
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('cal-pos-copy-btn');
     btn.textContent = '✓ Copied! Paste it into the chat.';
-    setTimeout(() => btn.textContent = '📋 Copy corrected coordinates', 3000);
+    setTimeout(() => btn.textContent = '📋 Copy position data', 3000);
   });
 }
 
-window.calStep = calStep;
-window.calJump = calJump;
+window.selectCalMark = selectCalMark;
 window.copyCalibration = copyCalibration;
 
 // ─── Mode switching ───────────────────────────────────────────────────────────
