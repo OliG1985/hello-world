@@ -591,11 +591,11 @@
           <h3>Choose mode</h3>
           <button class="diff-choice" onclick="chooseDifficulty('easy')">
             <div class="diff-choice-title">Easy</div>
-            <div class="diff-choice-desc">Chart labels visible. Scored round — 1 pt per correct answer.</div>
+            <div class="diff-choice-desc">Chart labels visible. 1 pt per correct answer. Max possible score: 50%.</div>
           </button>
           <button class="diff-choice hard" onclick="chooseDifficulty('hard')">
             <div class="diff-choice-title">Hard 🔥</div>
-            <div class="diff-choice-desc">Chart text blurred — no peeking! Scored round — double points.</div>
+            <div class="diff-choice-desc">Chart text blurred — no peeking! Double points. Max possible score: 100%.</div>
           </button>
           <button class="diff-choice learn" onclick="chooseLearning()">
             <div class="diff-choice-title">Learn 📚</div>
@@ -1274,7 +1274,7 @@ function chooseLearning() {
 }
 
 function startQuiz() {
-  const maxScore = TARGET_PTS * (difficulty === 'hard' ? 2 : 1);
+  const maxScore = TARGET_PTS * 2; // always hard-mode total; easy scores up to 50%
   quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', possiblePts: 0, maxScore };
   if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
   document.getElementById('quiz-ui').style.display  = 'block';
