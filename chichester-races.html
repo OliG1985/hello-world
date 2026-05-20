@@ -619,6 +619,30 @@
       text-align: center;
       flex-shrink: 0;
     }
+    .tour-elevated {
+      position: relative !important;
+      z-index: 9995 !important;
+      outline: 3px solid #f39c12;
+      outline-offset: 5px;
+      border-radius: 6px;
+    }
+    #tour-tooltip {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      background: #1a0e00;
+      border: 1px solid #f39c12;
+      border-radius: 10px;
+      padding: 14px 16px;
+      width: 250px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.8);
+    }
+    #tour-tooltip h3 { margin: 0 0 7px; font-size: 0.9rem; color: #f39c12; }
+    #tour-tooltip p  { margin: 0 0 12px; font-size: 0.78rem; color: #d09050; line-height: 1.5; }
+    #tour-tooltip .tour-actions { display: flex; justify-content: space-between; align-items: center; }
+    #tour-skip { background: none; border: none; color: #806040; font-size: 0.7rem; cursor: pointer; padding: 0; }
+    #tour-next { background: #7a3800; border: 1px solid #f39c12; color: #ffe0b0; padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+    #tour-next:hover { background: #9a4800; }
   </style>
 </head>
 <body>
@@ -763,6 +787,16 @@
       </div>
       <div class="rounding-list" id="rounding-list"></div>
     </div>
+  </div>
+</div>
+
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9990" onclick="tourDismiss()"></div>
+<div id="tour-tooltip">
+  <h3 id="tour-title"></h3>
+  <p  id="tour-text"></p>
+  <div class="tour-actions">
+    <button id="tour-skip" onclick="tourDismiss()">Skip tour</button>
+    <button id="tour-next" onclick="tourNext()">Next →</button>
   </div>
 </div>
 
@@ -1894,8 +1928,107 @@ function shuffle(arr) {
 
 function escQ(s) { return s.replace(/'/g, "\\'"); }
 
+// ─── First-visit tour ────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    target: '#panel-toggle',
+    title: 'The side panel',
+    text: 'This arrow hides or shows the side panel. Collapse it any time to see the full chart.'
+  },
+  {
+    target: '#btn-explore',
+    title: 'Explore mode',
+    text: 'Tap any mark on the chart to see its name, symbol, and which way to round it.'
+  },
+  {
+    target: '#btn-quiz',
+    title: 'Quiz & Learn',
+    text: 'Tap here to test yourself. We recommend starting with Learn mode — it tracks your mastery and focuses on the marks you find tricky.',
+    last: true
+  }
+];
+
+let tourIndex = 0;
+
+function startTour() {
+  if (localStorage.getItem('isc_tour_done')) return;
+  tourIndex = 0;
+  document.getElementById('tour-overlay').style.display = 'block';
+  showTourStep();
+}
+
+function showTourStep() {
+  const step = TOUR_STEPS[tourIndex];
+
+  // Remove previous elevation
+  document.querySelectorAll('.tour-elevated').forEach(el => {
+    el.classList.remove('tour-elevated');
+  });
+
+  // Elevate current target
+  if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el) el.classList.add('tour-elevated');
+  }
+
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-text').textContent  = step.text;
+  document.getElementById('tour-next').textContent  = step.last ? "Got it — let's go!" : 'Next →';
+
+  // Position tooltip near target
+  const tooltip = document.getElementById('tour-tooltip');
+  tooltip.style.display = 'block';
+  requestAnimationFrame(() => {
+    const tw = tooltip.offsetWidth;
+    const th = tooltip.offsetHeight;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 14;
+    let left, top;
+
+    if (step.target) {
+      const el = document.querySelector(step.target);
+      const r  = el ? el.getBoundingClientRect() : null;
+      if (r) {
+        // Prefer below, fall back to above
+        if (r.bottom + gap + th < vh) {
+          top = r.bottom + gap;
+        } else {
+          top = Math.max(gap, r.top - th - gap);
+        }
+        left = Math.min(Math.max(gap, r.left + r.width / 2 - tw / 2), vw - tw - gap);
+      }
+    }
+
+    if (left === undefined) {
+      left = (vw - tw) / 2;
+      top  = (vh - th) / 2;
+    }
+
+    tooltip.style.left = left + 'px';
+    tooltip.style.top  = top  + 'px';
+  });
+}
+
+function tourNext() {
+  tourIndex++;
+  if (tourIndex >= TOUR_STEPS.length) {
+    tourDismiss();
+  } else {
+    showTourStep();
+  }
+}
+
+function tourDismiss() {
+  document.querySelectorAll('.tour-elevated').forEach(el => el.classList.remove('tour-elevated'));
+  document.getElementById('tour-overlay').style.display = 'none';
+  document.getElementById('tour-tooltip').style.display = 'none';
+  localStorage.setItem('isc_tour_done', '1');
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 placeMarkers();
+setTimeout(startTour, 600);
 </script>
 </body>
 </html>
