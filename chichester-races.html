@@ -1,0 +1,2034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-H6X6C8VC5L"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-H6X6C8VC5L');
+  </script>
+  <title>Chichester Harbour Race Marks</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a1628;
+      color: #e8f0fe;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    header {
+      background: #0d2044;
+      border-bottom: 2px solid #1e4080;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    header h1 { font-size: 1rem; font-weight: 700; color: #7eb8f7; }
+    header p  { font-size: 0.72rem; color: #8ea8cc; }
+
+    .mode-btns { display: flex; gap: 5px; margin-left: auto; }
+
+    .mode-btn {
+      padding: 5px 11px;
+      border-radius: 20px;
+      border: 1px solid #1e4080;
+      background: transparent;
+      color: #8ea8cc;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .mode-btn.active { background: #1a5296; color: #e8f0fe; border-color: #3a72be; }
+
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    #map {
+      flex: 1;
+      background: #b8cfe0;
+      cursor: default;
+      position: relative;
+    }
+    #map.quiz-locate { cursor: crosshair; }
+
+    /* Hard mode: handled by swapping to the pre-blurred chart image */
+
+
+    /* Difficulty picker (shown at quiz start) */
+    #quiz-difficulty {
+      padding: 16px 12px;
+      display: none;
+    }
+    #quiz-difficulty h3 {
+      text-align: center;
+      color: #7eb8f7;
+      margin: 0 0 14px;
+      font-size: 1rem;
+    }
+    .diff-choice {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 2px solid #1e4080;
+      background: #0d1f3c;
+      color: #c5d8f0;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .diff-choice:hover { border-color: #7eb8f7; background: #152d54; }
+    .diff-choice .diff-choice-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #7eb8f7;
+      margin-bottom: 4px;
+    }
+    .diff-choice.hard .diff-choice-title { color: #ffb07a; }
+    .diff-choice.hard { border-color: #6a2000; }
+    .diff-choice.hard:hover { border-color: #ffb07a; background: #2a1200; }
+    .diff-choice.learn .diff-choice-title { color: #7ed9a8; }
+    .diff-choice.learn { border-color: #0d4a2a; }
+    .diff-choice.learn:hover { border-color: #7ed9a8; background: #071f12; }
+    .diff-choice .diff-choice-desc {
+      font-size: 0.75rem;
+      color: #8ea8cc;
+      line-height: 1.4;
+    }
+    /* Mastery bar shown in learn mode */
+    #mastery-bar-wrap {
+      display: none;
+      margin: 6px 0 10px;
+      text-align: center;
+    }
+    #mastery-bar-wrap.visible { display: block; }
+    #mastery-bar-label { font-size: 0.7rem; color: #7ed9a8; margin-bottom: 4px; }
+    #mastery-bar-track {
+      height: 6px; border-radius: 3px;
+      background: #0d2044; overflow: hidden;
+    }
+    #mastery-bar-fill {
+      height: 100%; border-radius: 3px;
+      background: linear-gradient(90deg, #1a7a47, #7ed9a8);
+      transition: width 0.4s;
+    }
+
+    .reset-mastery-btn {
+      background: none; border: 1px solid #3a2000; border-radius: 5px;
+      color: #806040; font-size: 0.7rem; padding: 4px 10px; cursor: pointer;
+    }
+    .reset-mastery-btn:hover { border-color: #cc5500; color: #ffb07a; }
+    .reset-yes {
+      flex: 1; padding: 6px; background: #6a0000; border: 1px solid #cc2200;
+      border-radius: 5px; color: #ffaaaa; font-size: 0.78rem; cursor: pointer;
+    }
+    .reset-yes:hover { background: #8a0000; }
+    .reset-no {
+      flex: 1; padding: 6px; background: #1a2a3a; border: 1px solid #3a5070;
+      border-radius: 5px; color: #8ea8cc; font-size: 0.78rem; cursor: pointer;
+    }
+    .reset-no:hover { background: #243a50; }
+
+    /* ── Panel ── */
+    #panel {
+      width: 240px;
+      flex-shrink: 0;
+      background: #0d2044;
+      border-left: 2px solid #1e4080;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.2s ease;
+    }
+
+    #panel.collapsed { width: 32px; }
+    #panel.collapsed .panel-inner { display: none; }
+
+    #panel-toggle {
+      flex-shrink: 0;
+      background: #0d2044;
+      border: none;
+      border-bottom: 1px solid #1e4080;
+      color: #5d8ab5;
+      font-size: 1rem;
+      padding: 6px 0;
+      cursor: pointer;
+      text-align: center;
+      width: 100%;
+    }
+
+    #panel-toggle:hover { color: #7eb8f7; }
+
+    .panel-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 2px solid #1e4080;
+      flex-shrink: 0;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #8ea8cc;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+
+    .panel-tab.active { color: #7eb8f7; border-bottom-color: #7eb8f7; }
+
+    .panel-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .panel-body::-webkit-scrollbar { width: 4px; }
+    .panel-body::-webkit-scrollbar-thumb { background: #1e4080; border-radius: 2px; }
+
+    /* Mark detail */
+    .mark-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #7eb8f7;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .mark-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge-red    { background: #5c1010; color: #ff8a8a; }
+    .badge-yellow { background: #4a3a00; color: #ffe07a; }
+    .badge-orange { background: #4a2500; color: #ffb07a; }
+    .badge-green  { background: #0a3a18; color: #7affa8; }
+    .badge-white  { background: #2a3550; color: #dde; }
+
+    .detail-row {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 7px;
+      font-size: 0.78rem;
+    }
+
+    .detail-label { color: #5d8ab5; min-width: 68px; flex-shrink: 0; }
+    .detail-value { color: #c8daf0; line-height: 1.4; }
+
+    .hint-text {
+      color: #5d8ab5;
+      font-size: 0.78rem;
+      text-align: center;
+      padding: 16px 6px;
+      line-height: 1.6;
+    }
+
+    /* End of round screen */
+    .round-end {
+      text-align: center;
+      padding: 12px 6px;
+    }
+    .round-score-big {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #7eb8f7;
+      margin: 8px 0 4px;
+    }
+    .round-score-label {
+      font-size: 0.78rem;
+      color: #8ea8cc;
+      margin-bottom: 14px;
+    }
+    .round-grade {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .round-play-again {
+      width: 100%;
+      padding: 10px;
+      background: #1a5296;
+      border: none;
+      border-radius: 7px;
+      color: #e8f0fe;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .round-play-again:hover { background: #2065b8; }
+
+    /* Mark list */
+    .mark-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      border-radius: 5px;
+      cursor: pointer;
+      border-bottom: 1px solid #132d55;
+      transition: background 0.12s;
+    }
+    .mark-list-item:hover { background: #132d55; }
+
+    .mark-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+    }
+
+    .mark-list-name { font-size: 0.78rem; color: #c8daf0; }
+    .mark-list-type { font-size: 0.66rem; color: #5d8ab5; }
+
+    /* Quiz */
+    .quiz-panel { text-align: center; }
+    .quiz-status { font-size: 0.78rem; color: #8ea8cc; margin-bottom: 12px; }
+    .quiz-prompt { font-size: 0.85rem; color: #e8f0fe; margin-bottom: 10px; line-height: 1.4; }
+    .quiz-target { font-size: 1rem; font-weight: 700; color: #7eb8f7; margin-bottom: 6px; }
+
+    .quiz-feedback {
+      min-height: 2em;
+      font-size: 0.8rem;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+    .feedback-correct { color: #2ecc71; }
+    .feedback-wrong   { color: #e74c3c; }
+    .feedback-hint    { color: #f39c12; }
+
+    .quiz-options { display: flex; flex-direction: column; gap: 6px; }
+
+    .qbtn {
+      width: 100%;
+      padding: 8px 10px;
+      background: #132d55;
+      border: 1px solid #1e4080;
+      border-radius: 7px;
+      color: #c8daf0;
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s;
+    }
+    .qbtn:hover:not(:disabled) { background: #1a3a6e; }
+    .qbtn.correct { background: #0d3a1e; border-color: #2ecc71; color: #2ecc71; }
+    .qbtn.wrong   { background: #3a0d0d; border-color: #e74c3c; color: #e74c3c; }
+
+    .next-btn {
+      margin-top: 12px;
+      padding: 8px 18px;
+      background: #1a5296;
+      border: none;
+      border-radius: 7px;
+      color: #e8f0fe;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+    .next-btn.visible { display: inline-block; }
+
+    /* Add mark bar */
+    .add-mark-bar {
+      padding: 8px 10px;
+      background: #0a1e3a;
+      border-top: 1px solid #1e4080;
+      flex-shrink: 0;
+    }
+
+    .add-mark-btn {
+      width: 100%;
+      padding: 7px;
+      background: transparent;
+      border: 1px dashed #1e4080;
+      border-radius: 5px;
+      color: #5d8ab5;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .add-mark-btn:hover, .add-mark-btn.active { border-color: #3a72be; color: #7eb8f7; }
+
+    .add-mark-form { display: none; padding-top: 7px; }
+    .add-mark-form.visible { display: block; }
+
+    .add-mark-form input, .add-mark-form select, .add-mark-form textarea {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 5px 7px;
+      background: #0d2044;
+      border: 1px solid #1e4080;
+      border-radius: 4px;
+      color: #e8f0fe;
+      font-size: 0.74rem;
+    }
+
+    .add-mark-form label {
+      display: block;
+      font-size: 0.68rem;
+      color: #5d8ab5;
+      margin-bottom: 2px;
+    }
+
+    .form-row { display: flex; gap: 5px; }
+    .form-row > * { flex: 1; }
+
+    .save-btn {
+      width: 100%;
+      padding: 6px;
+      background: #1a5296;
+      border: none;
+      border-radius: 5px;
+      color: #e8f0fe;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* Leaflet overrides */
+    .mark-tooltip {
+      background: #0d2044 !important;
+      border: 1px solid #1e4080 !important;
+      color: #7eb8f7 !important;
+      font-size: 0.74rem !important;
+      padding: 3px 7px !important;
+      box-shadow: none !important;
+    }
+    .mark-tooltip::before { border-top-color: #1e4080 !important; }
+
+    .mode-btn.calibrate { background: #2a1800; color: #ffb07a; border-color: #6a3800; }
+    .mode-btn.calibrate.active { background: #7a3800; color: #ffe0b0; border-color: #ffb07a; }
+
+    /* Calibration wizard panel — replaces the normal panel in calibrate mode */
+    #cal-panel {
+      display: none;
+      width: 240px;
+      flex-shrink: 0;
+      background: #1a0e00;
+      border-left: 2px solid #8a4000;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #cal-panel.visible { display: flex; }
+
+    .cal-header {
+      padding: 10px 14px;
+      background: #2a1400;
+      border-bottom: 1px solid #6a3000;
+      flex-shrink: 0;
+    }
+
+    .cal-progress-bar {
+      height: 4px;
+      background: #3a2000;
+      border-radius: 2px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+    .cal-progress-fill {
+      height: 100%;
+      background: #f39c12;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .cal-step { font-size: 0.7rem; color: #b07040; margin-bottom: 4px; }
+
+    .cal-mark-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffe0b0;
+      margin-bottom: 2px;
+    }
+
+    .cal-mark-code {
+      display: inline-block;
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: #f39c12;
+      background: #3a2000;
+      border: 1px solid #6a4000;
+      border-radius: 5px;
+      padding: 1px 8px;
+      margin-left: 6px;
+    }
+
+    .cal-mark-type { font-size: 0.72rem; color: #a07040; margin-top: 4px; }
+
+    .cal-instruction {
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: #d09050;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    .cal-placed {
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: #2ecc71;
+      min-height: 2em;
+      flex-shrink: 0;
+    }
+
+    .cal-actions {
+      padding: 10px 14px;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      border-top: 1px solid #3a2000;
+      flex-wrap: wrap;
+    }
+
+    .cal-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border-radius: 6px;
+      border: 1px solid #6a4000;
+      background: #2a1400;
+      color: #ffb07a;
+      font-size: 0.75rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .cal-btn:hover { background: #3a2000; }
+    .cal-btn.primary { background: #7a3800; border-color: #ffb07a; color: #ffe0b0; font-weight: 600; }
+    .cal-btn.primary:hover { background: #9a4800; }
+    .cal-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .cal-copy-section {
+      padding: 12px 14px;
+      border-top: 1px solid #3a2000;
+      flex-shrink: 0;
+      display: none;
+    }
+    .cal-copy-section.visible { display: block; }
+
+    .cal-copy-btn {
+      width: 100%;
+      padding: 9px;
+      background: #3a6a00;
+      border: 1px solid #7acc00;
+      border-radius: 6px;
+      color: #d0ff80;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cal-copy-btn:hover { background: #4a8a00; }
+
+    .cal-skip-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 14px;
+      font-size: 0.72rem;
+      color: #806040;
+    }
+    .cal-skip-item {
+      padding: 3px 0;
+      border-bottom: 1px solid #2a1800;
+      display: flex;
+      justify-content: space-between;
+    }
+    .cal-skip-item.done { color: #7acc44; }
+    .cal-skip-item button {
+      background: none;
+      border: none;
+      color: #f39c12;
+      font-size: 0.68rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    /* Rounding editor tab within cal-panel */
+    .cal-tabs {
+      display: flex;
+      border-bottom: 1px solid #3a2000;
+      flex-shrink: 0;
+    }
+    .cal-tab {
+      flex: 1; padding: 7px 4px; text-align: center;
+      background: none; border: none; border-bottom: 2px solid transparent;
+      margin-bottom: -1px; color: #806040; font-size: 0.72rem;
+      font-weight: 600; cursor: pointer;
+    }
+    .cal-tab.active { color: #ffb07a; border-bottom-color: #ffb07a; }
+    #cal-positions { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    .cal-pos-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 2px; border-bottom: 1px solid #2a1800;
+      font-size: 0.73rem; cursor: pointer; color: #c8a070;
+    }
+    .cal-pos-item:hover { color: #ffe0b0; }
+    .cal-pos-item.active { color: #f39c12; background: #2a1400; padding: 5px 6px; border-radius: 4px; }
+    #cal-rounding { display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
+    #cal-rounding.visible { display: flex; }
+    .rounding-list {
+      flex: 1; overflow-y: auto; padding: 8px 10px; min-height: 0;
+    }
+    .rounding-row {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 0; border-bottom: 1px solid #2a1800;
+      font-size: 0.73rem;
+    }
+    .rounding-name { flex: 1; color: #c8a070; }
+    .rounding-btns { display: flex; gap: 3px; }
+    .rbtn {
+      padding: 2px 7px; border-radius: 4px; font-size: 0.68rem;
+      border: 1px solid #3a2000; background: none;
+      color: #806040; cursor: pointer;
+    }
+    .rbtn.active-port  { background: #5c1010; color: #ff8a8a; border-color: #ff8a8a; }
+    .rbtn.active-stbd  { background: #0a3a18; color: #7affa8; border-color: #7affa8; }
+    .rbtn.active-none  { background: #2a2a2a; color: #aaa;    border-color: #555; }
+
+    .disclaimer {
+      padding: 4px 10px;
+      font-size: 0.62rem;
+      color: #3a5a80;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .tour-elevated {
+      position: relative !important;
+      z-index: 9995 !important;
+      outline: 3px solid #f39c12;
+      outline-offset: 5px;
+      border-radius: 6px;
+    }
+    #tour-tooltip {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      background: #1a0e00;
+      border: 1px solid #f39c12;
+      border-radius: 10px;
+      padding: 14px 16px;
+      width: 250px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.8);
+    }
+    #tour-tooltip h3 { margin: 0 0 7px; font-size: 0.9rem; color: #f39c12; }
+    #tour-tooltip p  { margin: 0 0 12px; font-size: 0.78rem; color: #d09050; line-height: 1.5; }
+    #tour-tooltip .tour-actions { display: flex; justify-content: space-between; align-items: center; }
+    #tour-skip { background: none; border: none; color: #806040; font-size: 0.7rem; cursor: pointer; padding: 0; }
+    #tour-next { background: #7a3800; border: 1px solid #f39c12; color: #ffe0b0; padding: 6px 14px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+    #tour-next:hover { background: #9a4800; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span style="font-size:1.3rem">⛵</span>
+  <div>
+    <h1>Chichester Harbour Race Marks</h1>
+    <p>ISC Course Card Alpha 2025–2028</p>
+  </div>
+  <div class="mode-btns">
+    <button class="mode-btn active" id="btn-explore"   onclick="setMode('explore')">Explore</button>
+    <button class="mode-btn"        id="btn-quiz"      onclick="setMode('quiz')">Quiz</button>
+    <button class="mode-btn calibrate" id="btn-calibrate" onclick="setMode('calibrate')"style="display:none">⚙ Calibrate</button>
+  </div>
+</header>
+
+<div class="layout">
+  <div id="map"></div>
+
+  <div id="panel">
+    <button id="panel-toggle" onclick="togglePanel()" title="Collapse/expand panel">◀</button>
+
+    <div class="panel-inner">
+      <div class="panel-tabs" id="panel-tabs">
+        <button class="panel-tab active" data-tab="info">Info</button>
+        <button class="panel-tab"        data-tab="list">Marks</button>
+      </div>
+
+      <div class="panel-body" id="tab-info">
+        <p class="hint-text">Click any mark on the chart to see details.</p>
+      </div>
+      <div class="panel-body" id="tab-list"  style="display:none"></div>
+      <div class="panel-body" id="tab-quiz"  style="display:none">
+        <div id="quiz-difficulty">
+          <h3>Choose mode</h3>
+          <button class="diff-choice" onclick="chooseDifficulty('easy')">
+            <div class="diff-choice-title">Easy</div>
+            <div class="diff-choice-desc">Chart labels visible. 1 pt per correct answer. Max possible score: 50%.</div>
+          </button>
+          <button class="diff-choice hard" onclick="chooseDifficulty('hard')">
+            <div class="diff-choice-title">Hard 🔥</div>
+            <div class="diff-choice-desc">Chart text blurred — no peeking! Double points. Max possible score: 100%.</div>
+          </button>
+          <button class="diff-choice learn" onclick="chooseLearning()">
+            <div class="diff-choice-title">Learn 📚</div>
+            <div class="diff-choice-desc">Infinite questions. Marks you get wrong come up more often. Tracks your overall mastery %.</div>
+          </button>
+          <div id="reset-mastery-area" style="margin-top:6px;text-align:center">
+            <button class="reset-mastery-btn" onclick="showResetConfirm()">Reset mastery scores</button>
+            <div id="reset-confirm" style="display:none;margin-top:8px;padding:10px;background:#1a0e00;border:1px solid #6a2000;border-radius:7px;font-size:0.78rem;color:#ffb07a">
+              This will clear all your progress. Are you sure?
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button class="reset-yes" onclick="confirmResetMastery()">Yes, reset</button>
+                <button class="reset-no"  onclick="cancelResetMastery()">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="quiz-ui" style="display:none">
+          <div class="quiz-panel">
+            <div class="quiz-status"  id="quiz-score">Score: 0 / 0</div>
+            <div id="mastery-bar-wrap">
+              <div id="mastery-bar-label">Overall mastery: 50%</div>
+              <div id="mastery-bar-track"><div id="mastery-bar-fill" style="width:50%"></div></div>
+            </div>
+            <div class="quiz-prompt"  id="quiz-question"></div>
+            <div class="quiz-target"  id="quiz-target"  style="display:none"></div>
+            <div class="quiz-options" id="quiz-options"></div>
+            <div class="quiz-feedback"id="quiz-feedback"></div>
+            <button class="next-btn"  id="quiz-next" onclick="nextQuestion()">Next →</button>
+          </div>
+        </div>
+        <div id="quiz-end" style="display:none">
+          <div class="round-end">
+            <div class="round-score-label" id="end-label"></div>
+            <div class="round-score-big"   id="end-score"></div>
+            <div class="round-score-label" id="end-pct"></div>
+            <div class="round-grade"       id="end-grade"></div>
+            <button class="round-play-again" onclick="showDifficultyPicker()">Play again</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="add-mark-bar" id="add-mark-bar">
+        <button class="add-mark-btn" id="add-toggle" onclick="toggleAddMode()">+ Add a custom mark</button>
+        <div class="add-mark-form" id="add-form">
+          <p style="font-size:0.7rem;color:#5d8ab5;margin-bottom:5px">Click the chart to place, then fill details.</p>
+          <label>Name</label>
+          <input type="text" id="new-name" placeholder="e.g. Start Pin" />
+          <div class="form-row">
+            <div>
+              <label>Colour</label>
+              <select id="new-color">
+                <option value="#FF3300">Red</option>
+                <option value="#FFFF00">Yellow</option>
+                <option value="#00BB44">Green</option>
+                <option value="#FF9900">Orange</option>
+                <option value="#FFFFFF">White</option>
+              </select>
+            </div>
+            <div>
+              <label>Type</label>
+              <select id="new-type">
+                <option>Port (P)</option>
+                <option>Starboard (S)</option>
+                <option>Start / Finish</option>
+                <option>Gate</option>
+                <option>Zone mark</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <label>Notes</label>
+          <textarea id="new-notes" rows="2" placeholder="Rounding, tips..."></textarea>
+          <button class="save-btn" onclick="saveCustomMark()">Save Mark</button>
+        </div>
+      </div>
+
+      <div class="disclaimer">Positions approximate — not for navigation</div>
+    </div>
+  </div>
+
+  <!-- Calibration wizard panel (shown instead of normal panel) -->
+  <div id="cal-panel">
+    <div class="cal-tabs">
+      <button class="cal-tab active" onclick="switchCalTab('positions')">📍 Positions</button>
+      <button class="cal-tab"        onclick="switchCalTab('rounding')">🔄 Rounding</button>
+    </div>
+    <div id="cal-positions">
+      <div style="padding:8px 10px;flex-shrink:0;border-bottom:1px solid #3a2000">
+        <button class="cal-copy-btn" id="cal-pos-copy-btn" style="width:100%" onclick="copyCalibration()">📋 Copy position data</button>
+      </div>
+      <div id="cal-active-bar" style="display:none;padding:6px 10px;font-size:0.72rem;color:#f39c12;background:#2a1400;border-bottom:1px solid #3a2000;flex-shrink:0">
+        Click chart to place <strong id="cal-active-name">—</strong>
+      </div>
+      <div id="cal-pos-list" style="flex:1;overflow-y:auto;min-height:0;padding:8px 10px"></div>
+    </div><!-- end #cal-positions -->
+    <div id="cal-rounding">
+      <div style="padding:8px 10px;flex-shrink:0;border-bottom:1px solid #3a2000">
+        <button class="cal-copy-btn" style="width:100%" onclick="copyRoundingData()">📋 Copy rounding data</button>
+      </div>
+      <div class="rounding-list" id="rounding-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tour-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9990" onclick="tourDismiss()"></div>
+<div id="tour-tooltip">
+  <h3 id="tour-title"></h3>
+  <p  id="tour-text"></p>
+  <div class="tour-actions">
+    <button id="tour-skip" onclick="tourDismiss()">Skip tour</button>
+    <button id="tour-next" onclick="tourNext()">Next →</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── Image dimensions (isc-chart.png is 2534 × 1792 px) ──────────────────────
+const IMG_W = 2534, IMG_H = 1792;
+// In Leaflet CRS.Simple, [lat, lng] = [y-from-bottom, x-from-left].
+// A pixel at (px, py) from image top-left maps to: [IMG_H - py, px]
+function px(x, y) { return [IMG_H - y, x]; }
+
+// ─── Mark data ────────────────────────────────────────────────────────────────
+// Positions estimated from pixel locations on the ISC Course Card Alpha image.
+// P = leave to Port  S = leave to Starboard
+const MARKS = [
+  // ── Emsworth Channel ──────────────────────────────────────────
+  { id:"marker_1",      code:"1",    name:"Marker",
+    pos: px(106, 433),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Northernmost mark in the Emsworth Channel.", club:"ISC" },
+
+  { id:"channel_2",     code:"2",    name:"Channel",
+    pos: px(254, 817),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"In the Emsworth Channel. Key windward/leeward mark.", club:"ISC" },
+
+  { id:"mill_rythe_m",  code:"M",    name:"Mill Rythe",
+    pos: px(217, 978),  color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Off Mill Rythe Creek, west coast of Hayling Island.", club:"ISC" },
+
+  { id:"n_pilsey",      code:"",     name:"N Pilsey",
+    pos: px(320, 1148), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard lateral", rounding:"As per sailing instructions",
+    notes:"Green conical buoy north of Pilsey Island. Key windward mark.", club:"ISC / HISC" },
+
+  { id:"pilsey_beacon", code:"",     name:"Pilsey Beacon",
+    pos: px(1232, 991), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Beacon", rounding:"As per sailing instructions",
+    notes:"Pilsey Island beacon.", club:"ISC / HISC" },
+
+  { id:"nw_pilsey",     code:"",     name:"NW Pilsey",
+    pos: px(368, 1261), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"As per sailing instructions",
+    notes:"NW of Pilsey Island. Used in longer harbour courses.", club:"ISC / HISC" },
+
+  { id:"sw_pilsey_3",   code:"3",    name:"SW Pilsey",
+    pos: px(422, 1279), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"SW of Pilsey Island. Turning mark for outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"fishery",       code:"",     name:"Fishery",
+    pos: px(398, 1329), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"As per sailing instructions",
+    notes:"Fishery area on the Hayling/Pilsey approaches.", club:"HISC" },
+
+  { id:"runway",        code:"✈️",   name:"Runway",
+    pos: px(731, 1195), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"Leave to starboard",
+    notes:"Named after Hayling Island airfield. Used in outer harbour courses.", club:"ISC / HISC" },
+
+  // ── Thorney Channel ──────────────────────────────────────────
+  { id:"stanbury_5",    code:"5",    name:"Stanbury",
+    pos: px(1206, 84),  color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Upper Thorney Channel. Northernmost turning mark.", club:"ISC" },
+
+  { id:"star_6",        code:"6",    name:"Star",
+    pos: px(1217, 563), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Thorney Channel. Used as windward or leeward mark.", club:"ISC" },
+
+  { id:"thorney_7",     code:"7",    name:"Thorney",
+    pos: px(1246, 1119),color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"In the Thorney Channel opposite Thorney Island.", club:"ISC" },
+
+  { id:"lowles_l",      code:"L",    name:"Lowles",
+    pos: px(1102, 1140),color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Lower Thorney Channel. Gybe or leeward mark.", club:"ISC" },
+
+
+  { id:"east_head_spit", code:"",    name:"East Head Spit",
+    pos: px(975, 1335),color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"The spit extending from East Head at the harbour entrance.", club:"ISC" },
+
+  { id:"v_inflatable",  code:"V",    name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"x_inflatable",  code:"X",    name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"y_inflatable",  code:"Y",    name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"pct_inflatable", code:"%",   name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"hash_inflatable", code:"#",  name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"anchor_inflatable", code:"⚓", name:"Inflatable",
+    noLocate: true,      color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Inflatable mark", rounding:"As per sailing instructions",
+    notes:"Inflatable mark — position set on the day.", club:"ISC" },
+
+  { id:"pivot",         code:"∅",     name:"Pivot",
+    pos: px(753, 1047), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Lower Thorney Channel near the junction with the main channel.", club:"ISC" },
+
+  { id:"camber",        code:"",     name:"Camber",
+    pos: px(1321, 1048),color:"#FFFF00", badgeClass:"badge-yellow",
+    type:"Cardinal / race mark", rounding:"As per sailing instructions",
+    notes:"Southerly cardinal mark at the Thorney/Chichester Channel junction.", club:"ISC / CYC" },
+
+  { id:"astra_a",       code:"A",    name:"Astra",
+    pos: px(1284, 1026),color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Lower Chichester Channel near the junction. Leeward or gybe mark.", club:"ISC" },
+
+  // ── Chichester Channel ───────────────────────────────────────
+  { id:"stocker",       code:"",     name:"Stocker",
+    pos: px(701, 1322), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"As per sailing instructions",
+    notes:"Red can buoy Fl(3)R.10s on Stocker Sands. Key channel reference mark.", club:"ISC / CYC" },
+
+  { id:"goal_posts",    code:"",     name:"The Goal Posts",
+    pos: px(1206, 850), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Gate", rounding:"As per sailing instructions",
+    notes:"Two marks forming a gate in the Chichester Channel off Itchenor.", club:"ISC" },
+
+  { id:"creek_post",    code:"",     name:"Creek Post",
+    pos: px(1246, 858), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Off a creek entrance near Itchenor. Close-in turning mark.", club:"ISC" },
+
+  { id:"itchenor_9",    code:"9",    name:"Itchenor",
+    pos: px(1985, 608), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Off Itchenor SC. Leeward mark; club finish line (C) is nearby.", club:"ISC" },
+
+  { id:"club_line_c",   code:"C",    name:"Club Line Finish",
+    pos: px(2283, 679), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Finish line", rounding:"As per sailing instructions",
+    notes:"Standard ISC finish line off the club.", club:"ISC" },
+
+  { id:"gallon_line_f", code:"F",    name:"Gallon Line Post",
+    pos: px(1933, 547), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Finish line", rounding:"As per sailing instructions",
+    notes:"Alternative finish line. The Gallon Line Post is fixed on the Itchenor shore.", club:"ISC" },
+
+  { id:"rookwood_q",    code:"R",    name:"Rookwood",
+    pos: px(1414, 1027),color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Near Rookwood in the Chichester Channel.", club:"ISC" },
+
+  { id:"park_8",        code:"8",    name:"Park",
+    pos: px(1537, 702), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Chichester Channel mid-section. Windward mark in upper harbour courses.", club:"ISC" },
+
+  { id:"deep_end_d",    code:"D",    name:"Deep End",
+    pos: px(2099, 552), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Upper Chichester Channel. Often the windward mark from Itchenor.", club:"ISC / CYC" },
+
+  { id:"fairway",       code:"",     name:"Fairway",
+    pos: px(2045, 598), color:"#FFFFFF", badgeClass:"badge-white",
+    type:"Safe water", rounding:"As per sailing instructions",
+    notes:"Safe water mark in the upper channel near Itchenor.", club:"General" },
+
+  { id:"cobner_p",      code:"P",    name:"Cobner",
+    pos: px(2074, 283), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to port",
+    notes:"Far upper Chichester Channel toward Dell Quay. Longest harbour courses.", club:"ISC / CYC" },
+
+  // ── Bosham / Upper harbour ────────────────────────────────────
+  { id:"roman_transit", code:"",     name:"Roman Transit",
+    pos: px(1672, 600), color:"#FFFF00", badgeClass:"badge-yellow",
+    type:"Transit mark", rounding:"As per sailing instructions",
+    notes:"A leading/transit mark. Line it up for a precise position line.", club:"ISC" },
+
+  { id:"chalkdock_t",   code:"",     name:"Chalkdock",
+    pos: px(1651, 668), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Upper harbour near Bosham Channel. Used in the longest harbour courses.", club:"ISC" },
+
+  { id:"wear_s",        code:"W",    name:"Wear",
+    pos: px(1641, 620), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Near Bosham. Turning mark in longer upper harbour courses.", club:"ISC" },
+
+  { id:"baker_xz",      code:"Z",    name:"Baker",
+    pos: px(1458, 822), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Bosham area. Turning mark in the longest upper harbour courses.", club:"ISC" },
+
+  { id:"peacock_y",     code:"🫖",   name:"Peacock",
+    pos: px(1546, 865), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Chichester/Bosham channel area. Used in ISC harbour courses.", club:"ISC" },
+
+  // ── Outer harbour ────────────────────────────────────────────
+  { id:"johns_folly_i", code:"J",    name:"John's Folly",
+    pos: px(952, 1163), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Near the harbour entrance on the Hayling side. Classic outer harbour mark.", club:"ISC / HISC" },
+
+  { id:"gardner_g",     code:"G",    name:"Gardner",
+    pos: px(663, 1259), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Outer harbour approaches. Turning mark for bay and outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"east_head_eh",  code:"H",    name:"East Head",
+    pos: px(1212, 1259),color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Sandy spit on the Chichester side of the harbour entrance. Classic reaching mark.", club:"ISC / HISC" },
+
+  { id:"ellanore_4",    code:"4",    name:"Ellanore",
+    pos: px(1309, 1175),color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Outer harbour approaches. Key mark for bay and outer harbour courses.", club:"ISC / HISC" },
+
+  { id:"snowhill",      code:"",     name:"Snowhill",
+    pos: px(1175, 1284),color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Near Snowhill Creek on the Chichester side.", club:"ISC" },
+
+  { id:"john_davis",    code:"♣",    name:"John Davis",
+    pos: px(983, 1237), color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Outer harbour / bar area. A turning mark for bay courses.", club:"ISC / HISC" },
+
+  // ── Hayling Bay ──────────────────────────────────────────────
+  { id:"freddie_brooks_b", code:"B", name:"Freddie Brooks",
+    pos: px(513, 1273), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Off Hayling Island in the bay. Windward or reaching mark.", club:"ISC / HISC" },
+
+  { id:"west_winner",   code:"",     name:"West Winner",
+    pos: px(481, 1670), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
+    notes:"West extremity of the Winner Bank.", club:"ISC / HISC" },
+
+  { id:"nw_winner",     code:"",     name:"NW Winner",
+    pos: px(506, 1487), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
+    notes:"NW extremity of the Winner Bank. Windward or gybe mark.", club:"ISC / HISC" },
+
+  { id:"north_winner",  code:"",     name:"North Winner",
+    pos: px(551, 1392), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral", rounding:"As per sailing instructions",
+    notes:"Northern side of the Winner Bank.", club:"ISC / HISC" },
+
+  { id:"mid_winner",    code:"",     name:"Mid Winner",
+    pos: px(634, 1366), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port lateral / race mark", rounding:"As per sailing instructions",
+    notes:"Mid-point of the Winner Bank. Gybe mark in windward-leeward courses.", club:"ISC / HISC" },
+
+  { id:"sandhead_n",    code:"N",    name:"North of Sandhead and Copyhold",
+    noLocate: true,      color:"#FF9900", badgeClass:"badge-orange",
+    type:"Course instruction", rounding:"As per sailing instructions",
+    notes:"Course N: pass north of both Sandhead and Copyhold marks.", club:"ISC / HISC" },
+
+  { id:"sandhead",      code:"",     name:"Sandhead",
+    pos: px(1207, 1200),color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Sandhead shoal mark. Course N passes north of this.", club:"ISC / HISC" },
+
+  { id:"copyhold",      code:"",     name:"Copyhold",
+    pos: px(927, 1291),color:"#FF9900", badgeClass:"badge-orange",
+    type:"Race mark", rounding:"As per sailing instructions",
+    notes:"Copyhold mark. Course N passes north of this.", club:"ISC / HISC" },
+
+  { id:"dunes_o",       code:"0",    name:"Dunes",
+    pos: px(770, 1448), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"Off the dunes on the south shore of Hayling Island. Leeward mark.", club:"ISC / HISC" },
+
+  { id:"calvert_jk",    code:"K",    name:"Calvert",
+    pos: px(482, 1583), color:"#00BB44", badgeClass:"badge-green",
+    type:"Starboard (S)", rounding:"Leave to starboard",
+    notes:"South of the Winner Bank in Hayling Bay. Used in longer bay courses.", club:"ISC / HISC" },
+
+  { id:"treloar_r",     code:"T",    name:"Treloar",
+    pos: px(489, 1758), color:"#FF3300", badgeClass:"badge-red",
+    type:"Port (P)", rounding:"Leave to port",
+    notes:"Southern Hayling Bay. Outer limit mark for the longest courses.", club:"ISC / HISC" },
+
+  // ── Inflatable / Zone marks ──────────────────────────────────
+  { id:"tern_zone",     code:"Ε",    name:"Tern",
+    pos: px(1193, 916), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark. Exact position set on the day.", club:"ISC" },
+
+  { id:"walrus_zone",   code:"@",    name:"Walrus",
+    pos: px(1388, 1115),color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark. Exact position set on the day.", club:"ISC" },
+
+  { id:"beach_zone",    code:"☀️",   name:"Beach",
+    pos: px(770, 1626), color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark off Hayling Island beach. Position set on the day.", club:"ISC / HISC" },
+
+  { id:"spit_zone",     code:"❄️",   name:"Spit",
+    pos: px(1214, 1055),color:"#FFDD00", badgeClass:"badge-yellow",
+    type:"Zone mark (inflatable)", rounding:"As per sailing instructions",
+    notes:"Inflatable zone mark near the Thorney Island spit. Position set on the day.", club:"ISC" },
+];
+
+// ─── Custom marks (localStorage) ─────────────────────────────────────────────
+let customMarks = JSON.parse(localStorage.getItem('chich_custom_marks') || '[]');
+function allMarks() { return [...MARKS, ...customMarks]; }
+
+// ─── Map setup (CRS.Simple — pixel coordinates, no distortion) ────────────────
+const imgBounds = [[0, 0], [IMG_H, IMG_W]];
+
+const map = L.map('map', {
+  crs: L.CRS.Simple,
+  minZoom: -2,
+  maxZoom: 2,
+  zoomControl: true
+});
+
+const chartOverlay = L.imageOverlay('isc-chart.png', imgBounds, {
+  attribution: '© Itchenor Sailing Club — Course Card Alpha 2025–2028'
+}).addTo(map);
+
+map.fitBounds(imgBounds, { padding: [10, 10] });
+
+// ─── Marker helpers ───────────────────────────────────────────────────────────
+function makeIcon(color, isSelected) {
+  const r = isSelected ? 10 : 7;
+  const ring = isSelected ? `<circle cx="12" cy="12" r="11" fill="none" stroke="#fff" stroke-width="2"/>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">
+    ${ring}
+    <circle cx="12" cy="12" r="${r}" fill="${color}" stroke="${isSelected ? '#fff' : '#333'}" stroke-width="${isSelected ? 2 : 1.5}"/>
+  </svg>`;
+  return L.icon({
+    iconUrl: 'data:image/svg+xml;base64,' + btoa(svg),
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
+  });
+}
+
+const leafletMarkers = {};
+let selectedMark = null;
+
+function markColor(mark) {
+  const r = effectiveRounding(mark);
+  if (r === 'Leave to port')      return '#FF3300';
+  if (r === 'Leave to starboard') return '#00BB44';
+  return '#FF9900';
+}
+
+function placeMarkers() {
+  Object.values(leafletMarkers).forEach(m => map.removeLayer(m));
+  Object.keys(leafletMarkers).forEach(k => delete leafletMarkers[k]);
+
+  allMarks().forEach(mark => {
+    if (mark.noLocate) return;
+    const latlng = mark.pos || [mark.lat, mark.lng];
+    const isSelected = selectedMark && selectedMark.id === mark.id;
+    const m = L.marker(latlng, { icon: makeIcon(markColor(mark), isSelected) })
+      .addTo(map)
+      .bindTooltip(mark.name, { direction: 'top', className: 'mark-tooltip' });
+
+    m.on('click', e => {
+      if (mode === 'explore') {
+        selectMark(mark);
+      } else if (mode === 'quiz' && quiz.phase === 'name' && !quiz.answered) {
+        handleSymbolAnswer(mark.name);
+      } else if (mode === 'quiz' && quiz.phase === 'locate' && !quiz.answered) {
+        L.DomEvent.stopPropagation(e);
+        handleLocateClick(mark.id === quiz.current.id);
+      } else if (mode === 'quiz') {
+        L.DomEvent.stopPropagation(e);
+      }
+    });
+    m.on('tooltipopen', () => {
+      if (mode === 'quiz' && !(quiz.phase === 'locate' && quiz.answered)) m.closeTooltip();
+    });
+    leafletMarkers[mark.id] = m;
+  });
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let mode = 'explore';
+let addingCustom = false;
+let pendingCustomLatLng = null;
+let quiz = { score: 0, total: 0, current: null, answered: false, queue: [] };
+let locateCircle = null;
+
+// ─── Panel collapse ───────────────────────────────────────────────────────────
+let panelCollapsed = false;
+function togglePanel() {
+  panelCollapsed = !panelCollapsed;
+  document.getElementById('panel').classList.toggle('collapsed', panelCollapsed);
+  document.getElementById('panel-toggle').textContent = panelCollapsed ? '▶' : '◀';
+}
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+let currentTab = 'info';
+function switchTab(name) {
+  currentTab = name;
+  document.querySelectorAll('.panel-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.tab === name));
+  ['info', 'list', 'quiz'].forEach(id => {
+    document.getElementById('tab-' + id).style.display = id === name ? 'block' : 'none';
+  });
+  if (name === 'list') buildMarkList();
+}
+
+document.querySelectorAll('.panel-tab').forEach(tab =>
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+
+// ─── Explore mode ─────────────────────────────────────────────────────────────
+function selectMark(mark) {
+  selectedMark = mark;
+  placeMarkers();
+  map.panTo(mark.pos || [mark.lat, mark.lng]);
+
+  switchTab('info');
+  const codeHtml = mark.code
+    ? `<span style="font-size:.9rem;font-weight:900;color:#f39c12;background:#2a1f00;border:1px solid #6a4f00;border-radius:5px;padding:1px 8px;margin-left:6px">${mark.code}</span>`
+    : '';
+
+  document.getElementById('tab-info').innerHTML = `
+    <div style="margin-bottom:8px">
+      <button onclick="clearSelection()" style="background:none;border:none;color:#5d8ab5;cursor:pointer;font-size:0.74rem">← All marks</button>
+    </div>
+    <div class="mark-name">${mark.name}${codeHtml}</div>
+    <span class="mark-badge ${mark.badgeClass || 'badge-yellow'}">${mark.type}</span>
+    <div class="detail-row">
+      <span class="detail-label">Rounding</span>
+      <span class="detail-value">${effectiveRounding(mark) || '—'}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Club</span>
+      <span class="detail-value">${mark.club || 'Custom'}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Notes</span>
+      <span class="detail-value">${mark.notes || '—'}</span>
+    </div>
+    ${mark.custom ? `<button onclick="deleteCustomMark('${mark.id}')" style="margin-top:10px;padding:5px 10px;background:#3a0d0d;border:1px solid #7a2020;border-radius:5px;color:#ff8a8a;font-size:0.72rem;cursor:pointer">Delete mark</button>` : ''}
+  `;
+}
+
+function clearSelection() {
+  selectedMark = null;
+  placeMarkers();
+  document.getElementById('tab-info').innerHTML = '<p class="hint-text">Click any mark on the chart to see details.</p>';
+}
+
+function buildMarkList() {
+  const marks = allMarks();
+  let html = '';
+  marks.forEach(mark => {
+    const code = mark.code ? `<span style="font-size:.65rem;color:#f39c12;font-weight:700;margin-left:3px">[${mark.code}]</span>` : '';
+    html += `<div class="mark-list-item" onclick="selectMark(window.MARK_MAP['${mark.id}'])">
+      <div class="mark-dot" style="background:${markColor(mark)}"></div>
+      <div>
+        <div class="mark-list-name">${mark.name}${code}</div>
+        <div class="mark-list-type">${mark.type}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('tab-list').innerHTML = html || '<p class="hint-text">No marks.</p>';
+  window.MARK_MAP = {};
+  allMarks().forEach(m => window.MARK_MAP[m.id] = m);
+}
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+// phase 'name'  — show code badge, pick the mark name from multiple choice
+// phase 'locate' — find the mark on the chart by clicking
+
+// Each coded+locatable mark = 2 base pts, coded noLocate or uncoded = 1 base pt.
+// Round ends when accumulated possible base points reaches TARGET_PTS.
+const TARGET_PTS = 2;
+
+function hasRoundingQ(mark) {
+  const r = effectiveRounding(mark);
+  return r === 'Leave to port' || r === 'Leave to starboard';
+}
+
+function markBasePts(mark) {
+  const hasCode = mark.code && mark.code !== '★';
+  let pts = 0;
+  if (hasCode)           pts++; // name question
+  if (hasRoundingQ(mark)) pts++; // port/starboard question
+  if (!mark.noLocate)    pts++; // locate question
+  return Math.max(pts, 1);
+}
+
+// ─── Learn mode — spaced repetition ──────────────────────────────────────────
+let quizMode = 'round'; // 'round' | 'learn'
+let markMastery = JSON.parse(localStorage.getItem('isc_mastery') || '{}');
+
+function getMastery(id) {
+  if (markMastery[id] === undefined) {
+    const mark = window.MARK_MAP && window.MARK_MAP[id];
+    markMastery[id] = (mark && mark.code) ? 3 : 7;
+  }
+  return markMastery[id];
+}
+
+function updateMastery(id, correct) {
+  markMastery[id] = correct
+    ? Math.min(10, getMastery(id) + 1)
+    : Math.max(0,  getMastery(id) - 2);
+  localStorage.setItem('isc_mastery', JSON.stringify(markMastery));
+}
+
+function markWeight(id) {
+  return Math.pow(11 - getMastery(id), 1.5);
+}
+
+function pickWeightedMark() {
+  const marks = allMarks();
+  const weights = marks.map(m => markWeight(m.id));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < marks.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return marks[i];
+  }
+  return marks[marks.length - 1];
+}
+
+function overallMastery() {
+  const marks = allMarks();
+  const sum = marks.reduce((acc, m) => acc + getMastery(m.id), 0);
+  return Math.round((sum / (marks.length * 10)) * 100);
+}
+
+function updateMasteryDisplay() {
+  const pct = overallMastery();
+  document.getElementById('mastery-bar-label').textContent = `Overall mastery: ${pct}%`;
+  document.getElementById('mastery-bar-fill').style.width = pct + '%';
+}
+
+function updateScoreDisplay() {
+  if (quizMode === 'learn') {
+    document.getElementById('quiz-score').textContent = `Question ${quiz.total + 1}`;
+    updateMasteryDisplay();
+  } else {
+    document.getElementById('quiz-score').textContent = `Score: ${quiz.score} / ${quiz.maxScore}`;
+  }
+}
+
+function showResetConfirm() {
+  document.getElementById('reset-confirm').style.display = 'block';
+}
+function cancelResetMastery() {
+  document.getElementById('reset-confirm').style.display = 'none';
+}
+function confirmResetMastery() {
+  markMastery = {};
+  localStorage.removeItem('isc_mastery');
+  document.getElementById('reset-confirm').style.display = 'none';
+  updateMasteryDisplay();
+}
+
+function showDifficultyPicker() {
+  chartOverlay.setUrl('isc-chart.png');
+  document.getElementById('quiz-difficulty').style.display = 'block';
+  document.getElementById('quiz-ui').style.display         = 'none';
+  document.getElementById('quiz-end').style.display        = 'none';
+}
+
+function chooseDifficulty(d) {
+  quizMode = 'round';
+  difficulty = d;
+  chartOverlay.setUrl(d === 'hard' ? 'isc-chart-hard.png' : 'isc-chart.png');
+  document.getElementById('mastery-bar-wrap').classList.remove('visible');
+  document.getElementById('quiz-difficulty').style.display = 'none';
+  document.getElementById('quiz-ui').style.display         = 'block';
+  startQuiz();
+}
+
+function chooseLearning() {
+  quizMode = 'learn';
+  difficulty = 'easy';
+  chartOverlay.setUrl('isc-chart.png');
+  document.getElementById('mastery-bar-wrap').classList.add('visible');
+  updateMasteryDisplay();
+  document.getElementById('quiz-difficulty').style.display = 'none';
+  document.getElementById('quiz-ui').style.display         = 'block';
+  startQuiz();
+}
+
+function startQuiz() {
+  const maxScore = TARGET_PTS * 2; // always hard-mode total; easy scores up to 50%
+  quiz = { score: 0, total: 0, current: null, answered: false, queue: [], phase: 'name', possiblePts: 0, maxScore };
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+  document.getElementById('quiz-ui').style.display  = 'block';
+  document.getElementById('quiz-end').style.display = 'none';
+  updateScoreDisplay();
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (quizMode === 'round' && quiz.possiblePts >= TARGET_PTS) {
+    showRoundEnd();
+    return;
+  }
+
+  const marks = allMarks();
+  if (quizMode === 'learn') {
+    quiz.current = pickWeightedMark();
+    chartOverlay.setUrl(getMastery(quiz.current.id) > 7.5 ? 'isc-chart-hard.png' : 'isc-chart.png');
+  } else {
+    if (quiz.queue.length === 0) quiz.queue = shuffle([...marks]);
+    quiz.current = quiz.queue.pop();
+    quiz.possiblePts += markBasePts(quiz.current);
+  }
+  quiz.answered = false;
+
+  updateScoreDisplay();
+  document.getElementById('quiz-feedback').textContent = '';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.classList.remove('visible');
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = nextQuestion;
+
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  const hasCode = quiz.current.code && quiz.current.code !== '★';
+  if (hasCode) {
+    quiz.phase = 'name';
+    runSymbolQuestion();
+  } else if (hasRoundingQ(quiz.current)) {
+    quiz.phase = 'rounding';
+    runRoundingQuestion();
+  } else {
+    quiz.phase = 'locate';
+    runLocateQuestion();
+  }
+}
+
+function showRoundEnd() {
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+  selectedMark = null;
+  placeMarkers();
+
+  const pct = quiz.maxScore > 0 ? Math.round((quiz.score / quiz.maxScore) * 100) : 0;
+  const grade = pct >= 90 ? '🏆 Excellent!' : pct >= 70 ? '⭐ Good effort!' : pct >= 50 ? '📈 Keep practising!' : '🧭 Back to the chart!';
+  const modeLabel = difficulty === 'hard' ? '🔥 Hard mode — double points' : `${TARGET_PTS} pt round`;
+  const gradeClass = pct >= 70 ? 'feedback-correct' : pct >= 50 ? 'feedback-hint' : 'feedback-wrong';
+
+  document.getElementById('end-label').textContent = `Round complete — ${modeLabel}`;
+  document.getElementById('end-score').textContent = `${quiz.score} / ${quiz.maxScore}`;
+  document.getElementById('end-pct').textContent   = `${pct}% correct`;
+  document.getElementById('end-grade').textContent = grade;
+  document.getElementById('end-grade').className   = `round-grade ${gradeClass}`;
+
+  document.getElementById('quiz-ui').style.display  = 'none';
+  document.getElementById('quiz-end').style.display = 'block';
+}
+
+function runSymbolQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+
+  const mark = quiz.current;
+  const marks = allMarks();
+  const usedNames = new Set([mark.name]);
+  const distractors = shuffle(marks.filter(m => m.id !== mark.id))
+    .filter(m => { if (usedNames.has(m.name)) return false; usedNames.add(m.name); return true; })
+    .slice(0, 3)
+    .map(m => m.name);
+  const options = shuffle([mark.name, ...distractors]);
+
+  document.getElementById('quiz-question').textContent = 'Which mark has this code?';
+  document.getElementById('quiz-target').style.display = 'block';
+  document.getElementById('quiz-target').innerHTML =
+    `<span style="display:inline-block;font-size:2rem;font-weight:900;color:#f39c12;` +
+    `background:#2a1f00;border:2px solid #f39c12;border-radius:8px;` +
+    `padding:6px 22px;letter-spacing:2px;min-width:60px;text-align:center">${mark.code}</span>`;
+  document.getElementById('quiz-options').innerHTML = options.map(o =>
+    `<button class="qbtn" onclick="handleSymbolAnswer('${escQ(o)}')">${o}</button>`
+  ).join('');
+}
+
+function handleSymbolAnswer(answer) {
+  if (quiz.answered || quiz.phase !== 'name') return;
+  quiz.answered = true;
+  quiz.total += 1;
+
+  const correct = answer === quiz.current.name;
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
+
+  document.querySelectorAll('.qbtn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === quiz.current.name) btn.classList.add('correct');
+    else if (btn.textContent === answer && !correct) btn.classList.add('wrong');
+  });
+
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct ? '✓ Correct!' : `✗ That was ${quiz.current.name}.`;
+  updateScoreDisplay();
+
+  const nextBtn = document.getElementById('quiz-next');
+  if (hasRoundingQ(quiz.current)) {
+    nextBtn.textContent = 'Port or starboard? →';
+    nextBtn.onclick = transitionToRounding;
+  } else if (quiz.current.noLocate) {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQuestion;
+  } else {
+    nextBtn.textContent = 'Find it on the map →';
+    nextBtn.onclick = transitionToLocate;
+  }
+  nextBtn.classList.add('visible');
+}
+
+function transitionToRounding() {
+  quiz.answered = false;
+  quiz.phase = 'rounding';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.classList.remove('visible');
+  runRoundingQuestion();
+}
+
+function runRoundingQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+
+  const mark = quiz.current;
+  document.getElementById('quiz-question').textContent = `How do you leave ${mark.name}?`;
+  document.getElementById('quiz-target').style.display = 'none';
+  document.getElementById('quiz-options').innerHTML =
+    `<button class="qbtn" onclick="handleRoundingAnswer('port')">🔴 Port</button>` +
+    `<button class="qbtn" onclick="handleRoundingAnswer('starboard')">🟢 Starboard</button>`;
+  document.getElementById('quiz-feedback').textContent = '';
+}
+
+function handleRoundingAnswer(answer) {
+  if (quiz.answered || quiz.phase !== 'rounding') return;
+  quiz.answered = true;
+  quiz.total += 1;
+
+  const correctSide = effectiveRounding(quiz.current) === 'Leave to port' ? 'port' : 'starboard';
+  const correct = answer === correctSide;
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
+
+  document.querySelectorAll('.qbtn').forEach(btn => {
+    btn.disabled = true;
+    const side = btn.textContent.includes('Port') ? 'port' : 'starboard';
+    if (side === correctSide) btn.classList.add('correct');
+    else if (side === answer && !correct) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct
+    ? `✓ Correct — leave to ${correctSide}.`
+    : `✗ Wrong — leave to ${correctSide}.`;
+  updateScoreDisplay();
+
+  const nextBtn = document.getElementById('quiz-next');
+  if (quiz.current.noLocate) {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQuestion;
+  } else {
+    nextBtn.textContent = 'Find it on the map →';
+    nextBtn.onclick = transitionToLocate;
+  }
+  nextBtn.classList.add('visible');
+}
+
+function transitionToLocate() {
+  if (quiz.current.noLocate) {
+    nextQuestion();
+    return;
+  }
+  quiz.answered = false;
+  quiz.phase = 'locate';
+  const nextBtn = document.getElementById('quiz-next');
+  nextBtn.textContent = 'Next →';
+  nextBtn.onclick = nextQuestion;
+  nextBtn.classList.remove('visible');
+  runLocateQuestion();
+}
+
+function runLocateQuestion() {
+  selectedMark = null;
+  placeMarkers();
+  map.fitBounds(imgBounds, { padding: [10, 10] });
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  const mark = quiz.current;
+  const codeStr = mark.code && mark.code !== '★' ? ` [${mark.code}]` : '';
+  document.getElementById('quiz-question').textContent = 'Find and click this mark on the chart:';
+  document.getElementById('quiz-target').style.display = 'block';
+  document.getElementById('quiz-target').textContent = mark.name + codeStr;
+  document.getElementById('quiz-options').innerHTML = '';
+  document.getElementById('quiz-feedback').textContent = 'Click the marker on the chart…';
+
+  map.getContainer().classList.add('quiz-locate');
+}
+
+function handleLocateClick(correct) {
+  if (quiz.answered || quiz.phase !== 'locate') return;
+  quiz.answered = true;
+  quiz.total += 1;
+  map.getContainer().classList.remove('quiz-locate');
+
+  if (quizMode === 'round') {
+    const pts = difficulty === 'hard' ? 2 : 1;
+    if (correct) quiz.score += pts;
+  }
+
+  const target = quiz.current.pos || [quiz.current.lat, quiz.current.lng];
+  if (locateCircle) map.removeLayer(locateCircle);
+  locateCircle = L.circleMarker(target, {
+    radius: 18,
+    color: correct ? '#2ecc71' : '#e74c3c',
+    fillColor: correct ? '#2ecc71' : '#e74c3c',
+    fillOpacity: 0.3, weight: 2
+  }).addTo(map);
+
+  map.panTo(target);
+  if (leafletMarkers[quiz.current.id]) leafletMarkers[quiz.current.id].openTooltip();
+
+  if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
+  fb.textContent = correct ? '✓ Correct!' : `✗ Wrong — the circle shows where it is.`;
+
+  updateScoreDisplay();
+  const nextBtn = document.getElementById('quiz-next');
+  const isLastRoundQ = quizMode === 'round' && quiz.possiblePts >= TARGET_PTS;
+  nextBtn.textContent = isLastRoundQ ? 'See results →' : 'Next →';
+  nextBtn.classList.add('visible');
+}
+
+// ─── Calibration ─────────────────────────────────────────────────────────────
+let calPositions  = {};
+let calActiveId   = null;
+let calMarkerTemp = null;
+
+// ─── Rounding editor ─────────────────────────────────────────────────────────
+localStorage.removeItem('isc_rounding'); // clear any stale overrides
+let roundingOverrides = {};
+
+function effectiveRounding(mark) {
+  const ov = roundingOverrides[mark.id];
+  if (ov === 'port')     return 'Leave to port';
+  if (ov === 'starboard') return 'Leave to starboard';
+  if (ov === 'none')     return 'none';
+  return mark.rounding;
+}
+
+function switchCalTab(name) {
+  document.querySelectorAll('.cal-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0) === (name === 'positions')));
+  document.getElementById('cal-positions').style.display = name === 'positions' ? '' : 'none';
+  const rDiv = document.getElementById('cal-rounding');
+  rDiv.classList.toggle('visible', name === 'rounding');
+  if (name === 'rounding') buildRoundingEditor();
+}
+
+function buildRoundingEditor() {
+  const marks = MARKS;
+  const html = marks.map(m => {
+    const eff = effectiveRounding(m);
+    const isPort = eff === 'Leave to port';
+    const isStbd = eff === 'Leave to starboard';
+    const isNone = !isPort && !isStbd;
+    return `<div class="rounding-row">
+      <span class="rounding-name">${m.name}${m.code ? ` <span style="color:#f39c12">[${m.code}]</span>` : ''}</span>
+      <div class="rounding-btns">
+        <button class="rbtn ${isPort ? 'active-port' : ''}" onclick="setRounding('${m.id}','port')">P</button>
+        <button class="rbtn ${isStbd ? 'active-stbd' : ''}" onclick="setRounding('${m.id}','starboard')">S</button>
+        <button class="rbtn ${isNone ? 'active-none' : ''}" onclick="setRounding('${m.id}','none')">—</button>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('rounding-list').innerHTML = html;
+}
+
+function setRounding(id, val) {
+  roundingOverrides[id] = val;
+  buildRoundingEditor();
+}
+
+function copyRoundingData() {
+  const lines = MARKS.map(m => {
+    const r = effectiveRounding(m);
+    const val = r === 'Leave to port' ? 'Leave to port'
+              : r === 'Leave to starboard' ? 'Leave to starboard'
+              : 'As per sailing instructions';
+    return `  { id:"${m.id}", rounding:"${val}" },`;
+  }).join('\n');
+  navigator.clipboard.writeText(lines).then(() => {
+    const btn = document.querySelector('#cal-rounding .cal-copy-btn');
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy rounding data', 2000);
+  });
+}
+
+function enterCalibrateMode() {
+  MARKS.forEach(m => {
+    if (!calPositions[m.id]) calPositions[m.id] = (m.pos || [0, 0]).slice();
+  });
+  document.getElementById('panel').style.display = 'none';
+  document.getElementById('cal-panel').classList.add('visible');
+  placeMarkers();
+  buildCalPosList();
+  map.on('click', calHandleClick);
+}
+
+function buildCalPosList() {
+  const html = MARKS.map(m => {
+    const active = m.id === calActiveId;
+    const placed = !!calPositions[m.id];
+    return `<div class="cal-pos-item${active ? ' active' : ''}" onclick="selectCalMark('${m.id}')">
+      <span style="flex:1">${m.name}${m.code ? ` <span style="color:#f39c12">[${m.code}]</span>` : ''}</span>
+      ${placed ? '<span style="color:#7acc44;font-size:0.65rem">✓</span>' : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('cal-pos-list').innerHTML = html;
+}
+
+function selectCalMark(id) {
+  calActiveId = id;
+  const mark = MARKS.find(m => m.id === id);
+  document.getElementById('cal-active-bar').style.display = '';
+  document.getElementById('cal-active-name').textContent = mark ? mark.name : id;
+  if (calPositions[id]) map.panTo(calPositions[id]);
+  if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
+  if (calPositions[id]) {
+    calMarkerTemp = L.circleMarker(calPositions[id], {
+      radius: 16, color: '#f39c12', weight: 3, fillOpacity: 0, dashArray: '5,5'
+    }).addTo(map);
+  }
+  buildCalPosList();
+}
+
+function calHandleClick(e) {
+  if (!calActiveId) return;
+  calPositions[calActiveId] = [e.latlng.lat, e.latlng.lng];
+  if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
+  calMarkerTemp = L.circleMarker([e.latlng.lat, e.latlng.lng], {
+    radius: 10, color: '#2ecc71', fillColor: '#2ecc71', fillOpacity: 0.6, weight: 2
+  }).addTo(map);
+  if (leafletMarkers[calActiveId]) {
+    leafletMarkers[calActiveId].setLatLng([e.latlng.lat, e.latlng.lng]);
+  }
+  buildCalPosList();
+}
+
+function exitCalibrateMode() {
+  map.off('click', calHandleClick);
+  if (calMarkerTemp) { map.removeLayer(calMarkerTemp); calMarkerTemp = null; }
+  calActiveId = null;
+  document.getElementById('panel').style.display = '';
+  document.getElementById('cal-panel').classList.remove('visible');
+}
+
+function copyCalibration() {
+  const lines = MARKS.map(mark => {
+    const pos  = calPositions[mark.id] || mark.pos;
+    const px_x = Math.round(pos[1]);
+    const px_y = Math.round(IMG_H - pos[0]);
+    return `  { id:"${mark.id}", pos: px(${px_x}, ${px_y}) },`;
+  });
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('cal-pos-copy-btn');
+    btn.textContent = '✓ Copied! Paste it into the chat.';
+    setTimeout(() => btn.textContent = '📋 Copy position data', 3000);
+  });
+}
+
+window.selectCalMark = selectCalMark;
+window.copyCalibration = copyCalibration;
+
+// ─── Mode switching ───────────────────────────────────────────────────────────
+let prevMode = 'explore';
+function setMode(m) {
+  if (prevMode === 'calibrate' && m !== 'calibrate') exitCalibrateMode();
+  prevMode = m;
+  mode = m;
+
+  ['explore', 'quiz', 'calibrate'].forEach(id =>
+    document.getElementById('btn-' + id)?.classList.toggle('active', id === m));
+
+  map.getContainer().classList.remove('quiz-locate');
+  map.off('click', handleLocateClick);
+  if (locateCircle) { map.removeLayer(locateCircle); locateCircle = null; }
+
+  document.getElementById('add-mark-bar').style.display = m === 'explore' ? '' : 'none';
+  selectedMark = null;
+
+  if (m === 'calibrate') {
+    enterCalibrateMode();
+  } else if (m === 'quiz') {
+    document.getElementById('panel-tabs').style.display = 'none';
+    placeMarkers();
+    switchTab('quiz');
+    showDifficultyPicker();
+  } else {
+    document.getElementById('panel-tabs').style.display = '';
+    chartOverlay.setUrl('isc-chart.png');
+    placeMarkers();
+    clearSelection();
+  }
+}
+
+// ─── Custom marks ─────────────────────────────────────────────────────────────
+function toggleAddMode() {
+  addingCustom = !addingCustom;
+  document.getElementById('add-toggle').classList.toggle('active', addingCustom);
+  document.getElementById('add-form').classList.toggle('visible', addingCustom);
+  if (addingCustom) {
+    map.once('click', e => {
+      pendingCustomLatLng = e.latlng;
+      document.querySelector('#add-form p').textContent =
+        `Position set at pixel (${Math.round(e.latlng.lng)}, ${Math.round(IMG_H - e.latlng.lat)}) — fill in details below.`;
+      document.getElementById('new-name').focus();
+    });
+  } else {
+    pendingCustomLatLng = null;
+  }
+}
+
+function saveCustomMark() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) { alert('Please enter a name.'); return; }
+  if (!pendingCustomLatLng) { alert('Please click the chart to set position first.'); return; }
+
+  const color = document.getElementById('new-color').value;
+  const type  = document.getElementById('new-type').value;
+  const notes = document.getElementById('new-notes').value.trim();
+  const badgeMap = {
+    '#FF3300':'badge-red','#FFFF00':'badge-yellow','#00BB44':'badge-green',
+    '#FF9900':'badge-orange','#FFFFFF':'badge-white'
+  };
+  const mark = {
+    id: 'custom_' + Date.now(),
+    name, type, notes, color,
+    code: '',
+    badgeClass: badgeMap[color] || 'badge-yellow',
+    pos: [pendingCustomLatLng.lat, pendingCustomLatLng.lng],
+    rounding: type,
+    club: 'Custom',
+    custom: true
+  };
+
+  customMarks.push(mark);
+  localStorage.setItem('chich_custom_marks', JSON.stringify(customMarks));
+
+  addingCustom = false;
+  pendingCustomLatLng = null;
+  document.getElementById('add-toggle').classList.remove('active');
+  document.getElementById('add-form').classList.remove('visible');
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-notes').value = '';
+
+  placeMarkers();
+  selectMark(mark);
+}
+
+function deleteCustomMark(id) {
+  customMarks = customMarks.filter(m => m.id !== id);
+  localStorage.setItem('chich_custom_marks', JSON.stringify(customMarks));
+  selectedMark = null;
+  placeMarkers();
+  clearSelection();
+}
+
+window.selectMark = selectMark;
+window.clearSelection = clearSelection;
+window.deleteCustomMark = deleteCustomMark;
+window.MARK_MAP = {};
+allMarks().forEach(m => window.MARK_MAP[m.id] = m);
+
+// ─── Difficulty ───────────────────────────────────────────────────────────────
+let difficulty = 'easy';
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escQ(s) { return s.replace(/'/g, "\\'"); }
+
+// ─── First-visit tour ────────────────────────────────────────────────────────
+const TOUR_STEPS = [
+  {
+    target: '#panel-toggle',
+    title: 'The side panel',
+    text: 'This arrow hides or shows the side panel. Collapse it any time to see the full chart.'
+  },
+  {
+    target: '#btn-explore',
+    title: 'Explore mode',
+    text: 'Tap any mark on the chart to see its name, symbol, and which way to round it.'
+  },
+  {
+    target: '#btn-quiz',
+    title: 'Quiz & Learn',
+    text: 'Tap here to test yourself. We recommend starting with Learn mode — it tracks your mastery and focuses on the marks you find tricky.',
+    last: true
+  }
+];
+
+let tourIndex = 0;
+
+function startTour() {
+  if (localStorage.getItem('isc_tour_done')) return;
+  tourIndex = 0;
+  document.getElementById('tour-overlay').style.display = 'block';
+  showTourStep();
+}
+
+function showTourStep() {
+  const step = TOUR_STEPS[tourIndex];
+
+  // Remove previous elevation
+  document.querySelectorAll('.tour-elevated').forEach(el => {
+    el.classList.remove('tour-elevated');
+  });
+
+  // Elevate current target
+  if (step.target) {
+    const el = document.querySelector(step.target);
+    if (el) el.classList.add('tour-elevated');
+  }
+
+  document.getElementById('tour-title').textContent = step.title;
+  document.getElementById('tour-text').textContent  = step.text;
+  document.getElementById('tour-next').textContent  = step.last ? "Got it — let's go!" : 'Next →';
+
+  // Position tooltip near target
+  const tooltip = document.getElementById('tour-tooltip');
+  tooltip.style.display = 'block';
+  requestAnimationFrame(() => {
+    const tw = tooltip.offsetWidth;
+    const th = tooltip.offsetHeight;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const gap = 14;
+    let left, top;
+
+    if (step.target) {
+      const el = document.querySelector(step.target);
+      const r  = el ? el.getBoundingClientRect() : null;
+      if (r) {
+        // Prefer below, fall back to above
+        if (r.bottom + gap + th < vh) {
+          top = r.bottom + gap;
+        } else {
+          top = Math.max(gap, r.top - th - gap);
+        }
+        left = Math.min(Math.max(gap, r.left + r.width / 2 - tw / 2), vw - tw - gap);
+      }
+    }
+
+    if (left === undefined) {
+      left = (vw - tw) / 2;
+      top  = (vh - th) / 2;
+    }
+
+    tooltip.style.left = left + 'px';
+    tooltip.style.top  = top  + 'px';
+  });
+}
+
+function tourNext() {
+  tourIndex++;
+  if (tourIndex >= TOUR_STEPS.length) {
+    tourDismiss();
+  } else {
+    showTourStep();
+  }
+}
+
+function tourDismiss() {
+  document.querySelectorAll('.tour-elevated').forEach(el => el.classList.remove('tour-elevated'));
+  document.getElementById('tour-overlay').style.display = 'none';
+  document.getElementById('tour-tooltip').style.display = 'none';
+  localStorage.setItem('isc_tour_done', '1');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+placeMarkers();
+setTimeout(startTour, 600);
+</script>
+</body>
+</html>

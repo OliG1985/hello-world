@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Buoy Learning App</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0a1628;
+      color: #e8f0fe;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #0d2044;
+      border-bottom: 2px solid #1e4080;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #7eb8f7;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: #8ea8cc;
+    }
+
+    .anchor-icon { font-size: 1.5rem; }
+
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    /* Info panel */
+    #panel {
+      width: 320px;
+      flex-shrink: 0;
+      background: #0d2044;
+      border-left: 2px solid #1e4080;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-tabs {
+      display: flex;
+      border-bottom: 2px solid #1e4080;
+    }
+
+    .panel-tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #8ea8cc;
+      background: transparent;
+      border: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .panel-tab.active {
+      background: #1a3a6e;
+      color: #7eb8f7;
+      border-bottom: 2px solid #7eb8f7;
+      margin-bottom: -2px;
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    /* Buoy detail card */
+    #buoy-detail {
+      display: none;
+    }
+
+    #buoy-detail.visible {
+      display: block;
+    }
+
+    .buoy-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .buoy-icon-large {
+      width: 48px;
+      height: 80px;
+      flex-shrink: 0;
+    }
+
+    .buoy-card-title h2 {
+      font-size: 1rem;
+      color: #7eb8f7;
+    }
+
+    .buoy-card-title .buoy-type-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #1e4080;
+      color: #8ea8cc;
+      margin-top: 4px;
+    }
+
+    .detail-section {
+      margin-bottom: 14px;
+    }
+
+    .detail-section h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #5d8ab5;
+      margin-bottom: 6px;
+    }
+
+    .detail-section p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #c8daf0;
+    }
+
+    .light-pattern {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #c8daf0;
+    }
+
+    .light-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Legend tab */
+    .legend-group {
+      margin-bottom: 18px;
+    }
+
+    .legend-group h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #5d8ab5;
+      margin-bottom: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .legend-item:hover {
+      background: #132d55;
+    }
+
+    .legend-swatch {
+      width: 30px;
+      height: 50px;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      font-size: 0.8rem;
+      color: #c8daf0;
+      line-height: 1.4;
+    }
+
+    /* Quiz tab */
+    .quiz-wrap { text-align: center; }
+
+    .quiz-score {
+      font-size: 0.85rem;
+      color: #8ea8cc;
+      margin-bottom: 16px;
+    }
+
+    .quiz-buoy-display {
+      margin: 0 auto 16px;
+    }
+
+    .quiz-question {
+      font-size: 0.95rem;
+      color: #e8f0fe;
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quiz-btn {
+      width: 100%;
+      padding: 10px 14px;
+      background: #132d55;
+      border: 1px solid #1e4080;
+      border-radius: 8px;
+      color: #c8daf0;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .quiz-btn:hover:not(:disabled) { background: #1a3a6e; border-color: #3a6aae; }
+    .quiz-btn.correct { background: #0d4020; border-color: #2ecc71; color: #2ecc71; }
+    .quiz-btn.wrong   { background: #401010; border-color: #e74c3c; color: #e74c3c; }
+
+    .quiz-next-btn {
+      margin-top: 14px;
+      padding: 10px 24px;
+      background: #1a5296;
+      border: none;
+      border-radius: 8px;
+      color: #e8f0fe;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+
+    .quiz-next-btn.visible { display: inline-block; }
+
+    .quiz-feedback {
+      font-size: 0.85rem;
+      margin-top: 10px;
+      min-height: 1.4em;
+      color: #8ea8cc;
+    }
+
+    /* Scrollbar */
+    .panel-content::-webkit-scrollbar { width: 6px; }
+    .panel-content::-webkit-scrollbar-track { background: #0d2044; }
+    .panel-content::-webkit-scrollbar-thumb { background: #1e4080; border-radius: 3px; }
+
+    .hint-text {
+      color: #5d8ab5;
+      font-size: 0.82rem;
+      text-align: center;
+      padding: 20px 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="anchor-icon">⚓</span>
+  <div>
+    <h1>Buoy Learning App</h1>
+    <p>IALA Maritime Buoyage System — click any buoy to learn about it</p>
+  </div>
+</header>
+
+<div class="layout">
+  <div id="map"></div>
+
+  <div id="panel">
+    <div class="panel-tabs">
+      <button class="panel-tab active" data-tab="info">Info</button>
+      <button class="panel-tab" data-tab="legend">Legend</button>
+      <button class="panel-tab" data-tab="quiz">Quiz</button>
+    </div>
+
+    <!-- INFO TAB -->
+    <div class="panel-content" id="tab-info">
+      <p class="hint-text">Click any buoy on the map to see detailed information about it.</p>
+      <div id="buoy-detail"></div>
+    </div>
+
+    <!-- LEGEND TAB -->
+    <div class="panel-content" id="tab-legend" style="display:none"></div>
+
+    <!-- QUIZ TAB -->
+    <div class="panel-content" id="tab-quiz" style="display:none">
+      <div class="quiz-wrap">
+        <div class="quiz-score" id="quiz-score">Score: 0 / 0</div>
+        <div id="quiz-buoy-display" class="quiz-buoy-display"></div>
+        <div class="quiz-question" id="quiz-question"></div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-feedback" id="quiz-feedback"></div>
+        <button class="quiz-next-btn" id="quiz-next">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─── Buoy data ───────────────────────────────────────────────────────────────
+const BUOYS = [
+  {
+    id: "port_lateral",
+    name: "Port Lateral Mark",
+    type: "Lateral",
+    region: "IALA Region A",
+    lat: 51.505,
+    lng: -0.09,
+    colors: ["#FF0000"],
+    topmark: "Cylinder (can)",
+    light: "Red — any rhythm",
+    lightColor: "#FF0000",
+    meaning: "Keep this buoy to your PORT (left) side when entering a harbour or travelling upstream. In Region A (Europe, Africa, Asia), port marks are RED.",
+    hint: "Memory aid: Red = Port = Region A"
+  },
+  {
+    id: "starboard_lateral",
+    name: "Starboard Lateral Mark",
+    type: "Lateral",
+    region: "IALA Region A",
+    lat: 51.508,
+    lng: -0.06,
+    colors: ["#00AA00"],
+    topmark: "Cone (point up)",
+    light: "Green — any rhythm",
+    lightColor: "#00AA00",
+    meaning: "Keep this buoy to your STARBOARD (right) side when entering a harbour or travelling upstream. In Region A (Europe, Africa, Asia), starboard marks are GREEN.",
+    hint: "Memory aid: Green = Starboard = Region A"
+  },
+  {
+    id: "north_cardinal",
+    name: "North Cardinal Mark",
+    type: "Cardinal",
+    region: "All regions",
+    lat: 51.514,
+    lng: -0.11,
+    colors: ["#000000", "#FFFF00"],
+    colorPattern: "Black above yellow",
+    topmark: "Two cones point UP",
+    light: "White — VQ or Q (very quick / quick flashing)",
+    lightColor: "#FFFFFF",
+    meaning: "Pass to the NORTH of this mark. Deepest water lies to the north. The black-over-yellow banding matches the topmark — both cones point upward (north).",
+    hint: "Both cones UP = North. 'Q' light (quick)."
+  },
+  {
+    id: "south_cardinal",
+    name: "South Cardinal Mark",
+    type: "Cardinal",
+    region: "All regions",
+    lat: 51.498,
+    lng: -0.11,
+    colors: ["#FFFF00", "#000000"],
+    colorPattern: "Yellow above black",
+    topmark: "Two cones point DOWN",
+    light: "White — VQ(6)+LFl or Q(6)+LFl",
+    lightColor: "#FFFFFF",
+    meaning: "Pass to the SOUTH of this mark. Deepest water lies to the south. Yellow-over-black banding; both cones point downward (south).",
+    hint: "Both cones DOWN = South. 6 flashes (clock = 6 o'clock = South)."
+  },
+  {
+    id: "east_cardinal",
+    name: "East Cardinal Mark",
+    type: "Cardinal",
+    region: "All regions",
+    lat: 51.505,
+    lng: -0.04,
+    colors: ["#000000", "#FFFF00", "#000000"],
+    colorPattern: "Black-Yellow-Black bands",
+    topmark: "Two cones base-to-base",
+    light: "White — VQ(3) or Q(3)",
+    lightColor: "#FFFFFF",
+    meaning: "Pass to the EAST of this mark. Deepest water lies to the east. Black-yellow-black banding; cones are back-to-back (pointing outward, east shape).",
+    hint: "Cones base-to-base = East. 3 flashes (clock = 3 o'clock = East)."
+  },
+  {
+    id: "west_cardinal",
+    name: "West Cardinal Mark",
+    type: "Cardinal",
+    region: "All regions",
+    lat: 51.505,
+    lng: -0.16,
+    colors: ["#FFFF00", "#000000", "#FFFF00"],
+    colorPattern: "Yellow-Black-Yellow bands",
+    topmark: "Two cones point-to-point",
+    light: "White — VQ(9) or Q(9)",
+    lightColor: "#FFFFFF",
+    meaning: "Pass to the WEST of this mark. Deepest water lies to the west. Yellow-black-yellow banding; cones are point-to-point (hourglass shape).",
+    hint: "Cones point-to-point = West. 9 flashes (clock = 9 o'clock = West)."
+  },
+  {
+    id: "isolated_danger",
+    name: "Isolated Danger Mark",
+    type: "Danger",
+    region: "All regions",
+    lat: 51.511,
+    lng: -0.13,
+    colors: ["#000000", "#FF0000"],
+    colorPattern: "Black and red horizontal bands",
+    topmark: "Two black spheres",
+    light: "White — Fl(2)",
+    lightColor: "#FFFFFF",
+    meaning: "Marks an isolated danger (rock, wreck, shoal) with navigable water all around it. DO NOT pass over this mark. Give it a wide berth.",
+    hint: "2 black balls on top = 2 flashes. Danger in all directions."
+  },
+  {
+    id: "safe_water",
+    name: "Safe Water Mark",
+    type: "Safe Water",
+    region: "All regions",
+    lat: 51.500,
+    lng: -0.07,
+    colors: ["#FF0000", "#FFFFFF"],
+    colorPattern: "Red and white vertical stripes",
+    topmark: "Single red sphere",
+    light: "White — Iso, Oc, LFl 10s or Mo(A)",
+    lightColor: "#FFFFFF",
+    meaning: "Indicates navigable water all around. Used to mark fairway centres, mid-channels, and landfall points. Safe to pass on any side (but stay in deep water).",
+    hint: "Red & white stripes = all clear around it."
+  },
+  {
+    id: "special_mark",
+    name: "Special Mark",
+    type: "Special",
+    region: "All regions",
+    lat: 51.496,
+    lng: -0.085,
+    colors: ["#FFFF00"],
+    topmark: "Yellow X shape",
+    light: "Yellow — any rhythm",
+    lightColor: "#FFDD00",
+    meaning: "Indicates a special area or feature — cables, pipelines, military exercise zones, recreation areas, fish farms. Not a navigation hazard marker; refer to the chart for details.",
+    hint: "All yellow = special purpose. Check your chart."
+  }
+];
+
+// ─── SVG buoy rendering ───────────────────────────────────────────────────────
+function makeBuoySVG(buoy, size = 36) {
+  const h = size * 2.2;
+  const w = size;
+  const cx = w / 2;
+
+  let bodyFill, bodyFill2, bodyFill3;
+  const c = buoy.colors;
+
+  // Body gradient based on color pattern
+  let bodyRect;
+  if (c.length === 1) {
+    bodyRect = `<rect x="${cx - size * 0.3}" y="${h * 0.25}" width="${size * 0.6}" height="${h * 0.45}" rx="4" fill="${c[0]}" stroke="#333" stroke-width="1.5"/>`;
+  } else if (c.length === 2) {
+    const mid = h * 0.47;
+    bodyRect = `
+      <rect x="${cx - size * 0.3}" y="${h * 0.25}" width="${size * 0.6}" height="${(h * 0.45) / 2}" rx="4" fill="${c[0]}" stroke="#333" stroke-width="1"/>
+      <rect x="${cx - size * 0.3}" y="${mid}" width="${size * 0.6}" height="${(h * 0.45) / 2}" rx="0" fill="${c[1]}" stroke="#333" stroke-width="1"/>
+    `;
+  } else {
+    const segH = (h * 0.45) / 3;
+    bodyRect = `
+      <rect x="${cx - size * 0.3}" y="${h * 0.25}" width="${size * 0.6}" height="${segH}" fill="${c[0]}" stroke="#333" stroke-width="1"/>
+      <rect x="${cx - size * 0.3}" y="${h * 0.25 + segH}" width="${size * 0.6}" height="${segH}" fill="${c[1]}" stroke="#333" stroke-width="1"/>
+      <rect x="${cx - size * 0.3}" y="${h * 0.25 + segH * 2}" width="${size * 0.6}" height="${segH}" fill="${c[2]}" stroke="#333" stroke-width="1"/>
+    `;
+  }
+
+  // Topmark
+  let topmark = "";
+  const topY = h * 0.12;
+  const topMarkType = (buoy.topmark || "").toLowerCase();
+  if (topMarkType.includes("cone") && topMarkType.includes("up")) {
+    topmark = `<polygon points="${cx},${topY} ${cx - 7},${topY + 14} ${cx + 7},${topY + 14}" fill="#000" stroke="#555" stroke-width="1"/>`;
+  } else if (topMarkType.includes("cone") && topMarkType.includes("down")) {
+    topmark = `<polygon points="${cx},${topY + 14} ${cx - 7},${topY} ${cx + 7},${topY}" fill="#000" stroke="#555" stroke-width="1"/>`;
+  } else if (topMarkType.includes("base-to-base")) {
+    topmark = `
+      <polygon points="${cx},${topY + 7} ${cx - 7},${topY} ${cx + 7},${topY}" fill="#000"/>
+      <polygon points="${cx},${topY + 7} ${cx - 7},${topY + 14} ${cx + 7},${topY + 14}" fill="#FFFF00"/>
+    `;
+  } else if (topMarkType.includes("point-to-point")) {
+    topmark = `
+      <polygon points="${cx},${topY} ${cx - 7},${topY + 7} ${cx + 7},${topY + 7}" fill="#FFFF00"/>
+      <polygon points="${cx},${topY + 14} ${cx - 7},${topY + 7} ${cx + 7},${topY + 7}" fill="#000"/>
+    `;
+  } else if (topMarkType.includes("sphere") || topMarkType.includes("ball")) {
+    const count = (topMarkType.match(/two/i)) ? 2 : 1;
+    const col = topMarkType.includes("red") ? "#CC0000" : "#222";
+    if (count === 2) {
+      topmark = `<circle cx="${cx}" cy="${topY + 4}" r="5" fill="${col}"/><circle cx="${cx}" cy="${topY + 13}" r="5" fill="${col}"/>`;
+    } else {
+      topmark = `<circle cx="${cx}" cy="${topY + 7}" r="6" fill="${col}"/>`;
+    }
+  } else if (topMarkType.includes("x")) {
+    topmark = `
+      <line x1="${cx - 6}" y1="${topY}" x2="${cx + 6}" y2="${topY + 12}" stroke="#FFD700" stroke-width="3"/>
+      <line x1="${cx + 6}" y1="${topY}" x2="${cx - 6}" y2="${topY + 12}" stroke="#FFD700" stroke-width="3"/>
+    `;
+  } else if (topMarkType.includes("cylinder") || topMarkType.includes("can")) {
+    topmark = `<rect x="${cx - 6}" y="${topY}" width="12" height="12" rx="2" fill="#CC0000"/>`;
+  }
+
+  // Mast & waterline
+  const mastTop = topY + 14;
+  const bodyTop = h * 0.25;
+  const mast = `<line x1="${cx}" y1="${mastTop}" x2="${cx}" y2="${bodyTop}" stroke="#888" stroke-width="1.5"/>`;
+  const bodyBottom = h * 0.7;
+  const anchor = `
+    <ellipse cx="${cx}" cy="${bodyBottom + 6}" rx="${size * 0.18}" ry="${size * 0.1}" fill="rgba(0,100,180,0.3)"/>
+    <line x1="${cx}" y1="${bodyBottom}" x2="${cx}" y2="${bodyBottom + 6}" stroke="#888" stroke-width="1"/>
+  `;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    ${topmark}
+    ${mast}
+    ${bodyRect}
+    ${anchor}
+  </svg>`;
+}
+
+function svgToDataURL(svg) {
+  return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+}
+
+// ─── Map setup ────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [51.505, -0.09],
+  zoom: 13,
+  zoomControl: true
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a> contributors',
+  maxZoom: 19
+}).addTo(map);
+
+// Place buoy markers
+const markers = {};
+BUOYS.forEach(buoy => {
+  const svg = makeBuoySVG(buoy, 28);
+  const icon = L.icon({
+    iconUrl: svgToDataURL(svg),
+    iconSize: [28, 62],
+    iconAnchor: [14, 62],
+    popupAnchor: [0, -62]
+  });
+
+  const marker = L.marker([buoy.lat, buoy.lng], { icon })
+    .addTo(map)
+    .bindTooltip(buoy.name, { permanent: false, direction: 'top', className: 'buoy-tooltip' });
+
+  marker.on('click', () => showBuoyInfo(buoy));
+  markers[buoy.id] = marker;
+});
+
+// Fit map to buoys
+const allLatLng = BUOYS.map(b => [b.lat, b.lng]);
+map.fitBounds(allLatLng, { padding: [40, 40] });
+
+// ─── Info panel ───────────────────────────────────────────────────────────────
+function showBuoyInfo(buoy) {
+  // Switch to info tab
+  switchTab('info');
+
+  const svg = makeBuoySVG(buoy, 40);
+  const detail = document.getElementById('buoy-detail');
+  detail.innerHTML = `
+    <div class="buoy-card-header">
+      <div class="buoy-icon-large">${svg}</div>
+      <div class="buoy-card-title">
+        <h2>${buoy.name}</h2>
+        <span class="buoy-type-badge">${buoy.type} • ${buoy.region}</span>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Meaning</h3>
+      <p>${buoy.meaning}</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Appearance</h3>
+      <p><strong>Colours:</strong> ${buoy.colorPattern || buoy.colors.join(', ')}</p>
+      <p><strong>Topmark:</strong> ${buoy.topmark}</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Light Characteristics</h3>
+      <div class="light-pattern">
+        <span class="light-dot" style="background:${buoy.lightColor};box-shadow:0 0 6px ${buoy.lightColor}"></span>
+        ${buoy.light}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Memory Aid</h3>
+      <p>${buoy.hint}</p>
+    </div>
+  `;
+  detail.classList.add('visible');
+  document.querySelector('.hint-text').style.display = 'none';
+}
+
+// ─── Legend ───────────────────────────────────────────────────────────────────
+function buildLegend() {
+  const container = document.getElementById('tab-legend');
+
+  const groups = {
+    "Lateral Marks": BUOYS.filter(b => b.type === "Lateral"),
+    "Cardinal Marks": BUOYS.filter(b => b.type === "Cardinal"),
+    "Special Marks": BUOYS.filter(b => ["Danger", "Safe Water", "Special"].includes(b.type))
+  };
+
+  let html = '';
+  for (const [groupName, buoys] of Object.entries(groups)) {
+    html += `<div class="legend-group"><h3>${groupName}</h3>`;
+    buoys.forEach(buoy => {
+      const svg = makeBuoySVG(buoy, 22);
+      html += `
+        <div class="legend-item" onclick="showBuoyInfo(window.BUOY_MAP['${buoy.id}']); switchTab('info')">
+          <div class="legend-swatch">${svg}</div>
+          <div class="legend-label"><strong>${buoy.name}</strong><br>${buoy.colorPattern || buoy.colors[0]}</div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+// Expose to onclick handlers
+window.BUOY_MAP = {};
+BUOYS.forEach(b => window.BUOY_MAP[b.id] = b);
+window.showBuoyInfo = showBuoyInfo;
+window.switchTab = switchTab;
+
+buildLegend();
+
+// ─── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.getElementById('tab-info').style.display    = name === 'info'   ? 'block' : 'none';
+  document.getElementById('tab-legend').style.display  = name === 'legend' ? 'block' : 'none';
+  document.getElementById('tab-quiz').style.display    = name === 'quiz'   ? 'block' : 'none';
+  if (name === 'quiz' && quizState.total === 0) startQuiz();
+}
+
+document.querySelectorAll('.panel-tab').forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+});
+
+// ─── Quiz ─────────────────────────────────────────────────────────────────────
+const QUIZ_QUESTIONS = [
+  ...BUOYS.map(b => ({
+    buoy: b,
+    question: "What is this buoy and what does it mean?",
+    correctAnswer: b.name,
+    options: () => shuffle([b.name, ...BUOYS.filter(x => x.id !== b.id).slice(0, 3).map(x => x.name)])
+  })),
+  ...BUOYS.map(b => ({
+    buoy: b,
+    question: "Which side should you pass this buoy on?",
+    correctAnswer: b.type === "Lateral"
+      ? (b.id === "port_lateral" ? "Port (left) side" : "Starboard (right) side")
+      : (b.type === "Cardinal"
+          ? `The ${b.id.split('_')[0].charAt(0).toUpperCase() + b.id.split('_')[0].slice(1)} side`
+          : "Any side is safe (check chart)"),
+    options: () => shuffle(["Port (left) side", "Starboard (right) side", "The North side", "The South side", "Any side is safe (check chart)"].slice(0, 4))
+  }))
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let quizState = { score: 0, total: 0, queue: [], answered: false };
+
+function startQuiz() {
+  quizState = { score: 0, total: 0, queue: shuffle(QUIZ_QUESTIONS), answered: false };
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (quizState.queue.length === 0) {
+    quizState.queue = shuffle(QUIZ_QUESTIONS);
+  }
+  const q = quizState.queue.pop();
+  quizState.current = q;
+  quizState.answered = false;
+
+  const svg = makeBuoySVG(q.buoy, 36);
+  document.getElementById('quiz-buoy-display').innerHTML = svg;
+  document.getElementById('quiz-question').textContent = q.question;
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('quiz-next').classList.remove('visible');
+
+  const opts = typeof q.options === 'function' ? q.options() : q.options;
+  const optsContainer = document.getElementById('quiz-options');
+  optsContainer.innerHTML = '';
+  opts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-btn';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => answerQuiz(opt, btn, optsContainer));
+    optsContainer.appendChild(btn);
+  });
+
+  updateScore();
+}
+
+function answerQuiz(answer, btn, container) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  quizState.total++;
+
+  const correct = answer === quizState.current.correctAnswer;
+  if (correct) {
+    quizState.score++;
+    btn.classList.add('correct');
+    document.getElementById('quiz-feedback').textContent = '✓ Correct! ' + quizState.current.buoy.hint;
+  } else {
+    btn.classList.add('wrong');
+    // Highlight correct answer
+    container.querySelectorAll('.quiz-btn').forEach(b => {
+      if (b.textContent === quizState.current.correctAnswer) b.classList.add('correct');
+    });
+    document.getElementById('quiz-feedback').textContent = '✗ ' + quizState.current.buoy.hint;
+  }
+
+  container.querySelectorAll('.quiz-btn').forEach(b => b.disabled = true);
+  document.getElementById('quiz-next').classList.add('visible');
+  updateScore();
+}
+
+function updateScore() {
+  document.getElementById('quiz-score').textContent =
+    `Score: ${quizState.score} / ${quizState.total}`;
+}
+
+document.getElementById('quiz-next').addEventListener('click', nextQuestion);
+</script>
+</body>
+</html>
