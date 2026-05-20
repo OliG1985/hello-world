@@ -1486,6 +1486,7 @@ function handleSymbolAnswer(answer) {
   });
 
   if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
 
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
@@ -1542,6 +1543,7 @@ function handleRoundingAnswer(answer) {
     if (correct) quiz.score += pts;
   }
   if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
 
   document.querySelectorAll('.qbtn').forEach(btn => {
     btn.disabled = true;
@@ -1623,6 +1625,7 @@ function handleLocateClick(correct) {
   if (leafletMarkers[quiz.current.id]) leafletMarkers[quiz.current.id].openTooltip();
 
   if (quizMode === 'learn') updateMastery(quiz.current.id, correct);
+  if (quizMode === 'learn' && !correct) chartOverlay.setUrl('isc-chart.png');
 
   const fb = document.getElementById('quiz-feedback');
   fb.className = 'quiz-feedback ' + (correct ? 'feedback-correct' : 'feedback-wrong');
