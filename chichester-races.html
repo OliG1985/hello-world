@@ -1454,7 +1454,11 @@ function runSymbolQuestion() {
 
   const mark = quiz.current;
   const marks = allMarks();
-  const distractors = shuffle(marks.filter(m => m.id !== mark.id)).slice(0, 3).map(m => m.name);
+  const usedNames = new Set([mark.name]);
+  const distractors = shuffle(marks.filter(m => m.id !== mark.id))
+    .filter(m => { if (usedNames.has(m.name)) return false; usedNames.add(m.name); return true; })
+    .slice(0, 3)
+    .map(m => m.name);
   const options = shuffle([mark.name, ...distractors]);
 
   document.getElementById('quiz-question').textContent = 'Which mark has this code?';
